@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "US Citizenship Test",
+    "slug": "citizenship-test",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "citizenshiptest",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourname.citizenshiptest"
+    },
+    "android": {
+      "package": "com.yourname.citizenshiptest",
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "SCHEDULE_EXACT_ALARM",
+        "POST_NOTIFICATIONS"
+      ]
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "color": "#3B5BDB"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
