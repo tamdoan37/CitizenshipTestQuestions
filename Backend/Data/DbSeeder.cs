@@ -9,506 +9,283 @@ public static class DbSeeder
     {
         await db.Database.MigrateAsync();
 
-        if (!await db.Questions.AnyAsync())
-            await SeedQuestionsAsync(db);
-
-        if (!await db.FederalOfficials.AnyAsync())
-            await SeedFederalOfficialsAsync(db);
-
-        if (!await db.StateOfficials.AnyAsync())
-            await SeedStateOfficialsAsync(db);
-
-        if (!await db.FluencySentences.AnyAsync())
-            await SeedFluencySentencesAsync(db);
+        if (!await db.Questions.AnyAsync())       await SeedQuestionsAsync(db);
+        if (!await db.FederalOfficials.AnyAsync()) await SeedFederalOfficialsAsync(db);
+        if (!await db.StateOfficials.AnyAsync())   await SeedStateOfficialsAsync(db);
+        if (!await db.FluencySentences.AnyAsync()) await SeedFluencySentencesAsync(db);
 
         await db.SaveChangesAsync();
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  QUESTIONS  (USCIS 2008 100 Civics Questions)
-    //  IsDynamic=true → answers injected from officials DB at runtime
-    //  Is65PlusExempt=true → included in the 65+/20yr exception set
-    //  IsFrequent=true → higher SRS starting weight
+    //  QUESTIONS  — USCIS 2008 100 Civics Questions
+    //  IsStateSpecific   → patch from StateOfficials at request time
+    //  IsFederalExecutive→ patch from FederalOfficials at request time
+    //  IsStarredQuestion → raised SRS starting weight (frequently tested)
     // ─────────────────────────────────────────────────────────────
     private static async Task SeedQuestionsAsync(AppDbContext db)
     {
+        // Helper shorthand
+        static Question Q(int id, string qid, string cat, string text,
+            List<string> answers,
+            bool starred = false, bool stateSpecific = false, bool federalExec = false)
+            => new()
+            {
+                Id = id, QuestionId = qid, TestVersion = "2008",
+                Category = cat, QuestionText = text, FixedAnswers = answers,
+                IsStarredQuestion = starred, IsStateSpecific = stateSpecific, IsFederalExecutive = federalExec
+            };
+
+        const string GOV = "AMERICAN GOVERNMENT";
+        const string HIS = "AMERICAN HISTORY";
+        const string CIV = "INTEGRATED CIVICS";
+
         var questions = new List<Question>
         {
-            // ── AMERICAN GOVERNMENT ── Principles of American Democracy ──
-            new() { Id = 1, QuestionText = "What is the supreme law of the land?",
-                FixedAnswers = ["the Constitution"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Principles of American Democracy",
-                IsFrequent = true, Is65PlusExempt = true },
-
-            new() { Id = 2, QuestionText = "What does the Constitution do?",
-                FixedAnswers = ["sets up the government", "defines the government", "protects basic rights of Americans"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Principles of American Democracy",
-                Is65PlusExempt = true },
-
-            new() { Id = 3, QuestionText = "The idea of self-government is in the first three words of the Constitution. What are these words?",
-                FixedAnswers = ["We the People"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Principles of American Democracy",
-                Is65PlusExempt = true },
-
-            new() { Id = 4, QuestionText = "What is an amendment?",
-                FixedAnswers = ["a change to the Constitution", "an addition to the Constitution"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Principles of American Democracy",
-                Is65PlusExempt = true },
-
-            new() { Id = 5, QuestionText = "What do we call the first ten amendments to the Constitution?",
-                FixedAnswers = ["the Bill of Rights"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Principles of American Democracy",
-                IsFrequent = true, Is65PlusExempt = true },
-
-            new() { Id = 6, QuestionText = "What is one right or freedom from the First Amendment?",
-                FixedAnswers = ["speech", "religion", "assembly", "press", "petition the government"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Principles of American Democracy",
-                IsFrequent = true, Is65PlusExempt = true },
-
-            new() { Id = 7, QuestionText = "How many amendments does the Constitution have?",
-                FixedAnswers = ["twenty-seven", "27"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Principles of American Democracy",
-                Is65PlusExempt = true },
-
-            new() { Id = 8, QuestionText = "What did the Declaration of Independence do?",
-                FixedAnswers = ["announced our independence from Great Britain", "declared our independence from Great Britain", "said that the United States is free from Great Britain"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Principles of American Democracy" },
-
-            new() { Id = 9, QuestionText = "What are two rights in the Declaration of Independence?",
-                FixedAnswers = ["life", "liberty", "pursuit of happiness"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Principles of American Democracy" },
-
-            new() { Id = 10, QuestionText = "What is freedom of religion?",
-                FixedAnswers = ["You can practice any religion, or not practice a religion."],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Principles of American Democracy" },
-
-            new() { Id = 11, QuestionText = "What is the economic system in the United States?",
-                FixedAnswers = ["capitalist economy", "market economy"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Principles of American Democracy",
-                Is65PlusExempt = true },
-
-            new() { Id = 12, QuestionText = "What is the \"rule of law\"?",
-                FixedAnswers = ["Everyone must follow the law.", "Leaders must obey the law.", "Government must obey the law.", "No one is above the law."],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Principles of American Democracy",
-                Is65PlusExempt = true },
-
-            // ── AMERICAN GOVERNMENT ── System of Government ──
-            new() { Id = 13, QuestionText = "Name one branch or part of the government.",
-                FixedAnswers = ["Congress", "legislative", "President", "executive", "the courts", "judicial"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government",
-                IsFrequent = true, Is65PlusExempt = true },
-
-            new() { Id = 14, QuestionText = "What stops one branch of government from becoming too powerful?",
-                FixedAnswers = ["checks and balances", "separation of powers"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government" },
-
-            new() { Id = 15, QuestionText = "Who is in charge of the executive branch?",
-                FixedAnswers = ["the President"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government" },
-
-            new() { Id = 16, QuestionText = "Who makes federal laws?",
-                FixedAnswers = ["Congress", "Senate and House of Representatives", "the U.S. legislature", "the national legislature"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government" },
-
-            new() { Id = 17, QuestionText = "What are the two parts of the U.S. Congress?",
-                FixedAnswers = ["the Senate and House of Representatives", "the Senate and the House"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government",
-                IsFrequent = true, Is65PlusExempt = true },
-
-            new() { Id = 18, QuestionText = "How many U.S. Senators are there?",
-                FixedAnswers = ["one hundred", "100"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government",
-                Is65PlusExempt = true },
-
-            new() { Id = 19, QuestionText = "We elect a U.S. Senator for how many years?",
-                FixedAnswers = ["six", "6"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government" },
-
-            new() { Id = 20, QuestionText = "Who is one of your state's U.S. Senators now?",
-                FixedAnswers = [],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government",
-                IsDynamic = true, Is65PlusExempt = true },
-
-            new() { Id = 21, QuestionText = "The House of Representatives has how many voting members?",
-                FixedAnswers = ["four hundred thirty-five", "435"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government",
-                Is65PlusExempt = true },
-
-            new() { Id = 22, QuestionText = "We elect a U.S. Representative for how many years?",
-                FixedAnswers = ["two", "2"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government",
-                Is65PlusExempt = true },
-
-            new() { Id = 23, QuestionText = "Name your U.S. Representative.",
-                FixedAnswers = [],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government",
-                IsDynamic = true },
-
-            new() { Id = 24, QuestionText = "Who does a U.S. Senator represent?",
-                FixedAnswers = ["all people of the state"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government",
-                Is65PlusExempt = true },
-
-            new() { Id = 25, QuestionText = "Why do some states have more Representatives than other states?",
-                FixedAnswers = ["because of the state's population", "because they have more people", "because some states have more people"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government" },
-
-            new() { Id = 26, QuestionText = "We elect a President for how many years?",
-                FixedAnswers = ["four", "4"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government" },
-
-            new() { Id = 27, QuestionText = "In what month do we vote for President?",
-                FixedAnswers = ["November"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government",
-                Is65PlusExempt = true },
-
-            new() { Id = 28, QuestionText = "What is the name of the President of the United States now?",
-                FixedAnswers = [],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government",
-                IsDynamic = true, IsFrequent = true, Is65PlusExempt = true },
-
-            new() { Id = 29, QuestionText = "What is the name of the Vice President of the United States now?",
-                FixedAnswers = [],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government",
-                IsDynamic = true, IsFrequent = true },
-
-            new() { Id = 30, QuestionText = "If the President can no longer serve, who becomes President?",
-                FixedAnswers = ["the Vice President"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government" },
-
-            new() { Id = 31, QuestionText = "If both the President and the Vice President can no longer serve, who becomes President?",
-                FixedAnswers = ["the Speaker of the House"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government" },
-
-            new() { Id = 32, QuestionText = "Who is the Commander in Chief of the military?",
-                FixedAnswers = ["the President"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government" },
-
-            new() { Id = 33, QuestionText = "Who signs bills to become laws?",
-                FixedAnswers = ["the President"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government" },
-
-            new() { Id = 34, QuestionText = "Who vetoes bills?",
-                FixedAnswers = ["the President"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government" },
-
-            new() { Id = 35, QuestionText = "What does the President's Cabinet do?",
-                FixedAnswers = ["advises the President"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government" },
-
-            new() { Id = 36, QuestionText = "What are two Cabinet-level positions?",
-                FixedAnswers = ["Secretary of Agriculture", "Secretary of Commerce", "Secretary of Defense",
-                    "Secretary of Education", "Secretary of Energy", "Secretary of Health and Human Services",
-                    "Secretary of Homeland Security", "Secretary of Housing and Urban Development",
-                    "Secretary of the Interior", "Secretary of Labor", "Secretary of State",
-                    "Secretary of Transportation", "Secretary of the Treasury", "Secretary of Veterans Affairs",
-                    "Attorney General", "Vice President"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government" },
-
-            new() { Id = 37, QuestionText = "What does the judicial branch do?",
-                FixedAnswers = ["reviews laws", "explains laws", "resolves disputes", "decides if a law goes against the Constitution"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government" },
-
-            new() { Id = 38, QuestionText = "What is the highest court in the United States?",
-                FixedAnswers = ["the Supreme Court"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government",
-                IsFrequent = true },
-
-            new() { Id = 39, QuestionText = "How many justices are on the Supreme Court?",
-                FixedAnswers = ["nine", "9"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government" },
-
-            new() { Id = 40, QuestionText = "Who is the Chief Justice of the United States now?",
-                FixedAnswers = [],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government",
-                IsDynamic = true },
-
-            new() { Id = 41, QuestionText = "Under our Constitution, some powers belong to the federal government. What is one power of the federal government?",
-                FixedAnswers = ["to print money", "to declare war", "to create an army", "to make treaties"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government" },
-
-            new() { Id = 42, QuestionText = "Under our Constitution, some powers belong to the states. What is one power of the states?",
-                FixedAnswers = ["provide schooling and education", "provide protection (police)", "provide safety (fire departments)", "give a driver's license", "approve zoning and land use"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government" },
-
-            new() { Id = 43, QuestionText = "Who is the Governor of your state now?",
-                FixedAnswers = [],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government",
-                IsDynamic = true },
-
-            new() { Id = 44, QuestionText = "What is the capital of your state?",
-                FixedAnswers = [],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government",
-                IsDynamic = true, Is65PlusExempt = true },
-
-            new() { Id = 45, QuestionText = "What are the two major political parties in the United States?",
-                FixedAnswers = ["Democratic and Republican"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "System of Government",
-                IsFrequent = true },
-
-            // ── AMERICAN GOVERNMENT ── Rights and Responsibilities ──
-            new() { Id = 46, QuestionText = "What is the political party of the President now?",
-                FixedAnswers = [],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Rights and Responsibilities",
-                IsDynamic = true, Is65PlusExempt = true },
-
-            new() { Id = 47, QuestionText = "What is the name of the Speaker of the House of Representatives now?",
-                FixedAnswers = [],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Rights and Responsibilities",
-                IsDynamic = true, Is65PlusExempt = true },
-
-            new() { Id = 48, QuestionText = "There are four amendments to the Constitution about who can vote. Describe one of them.",
-                FixedAnswers = ["Citizens eighteen (18) and older can vote.", "You don't have to pay a poll tax to vote.", "Any citizen can vote.", "A male citizen of any race can vote."],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Rights and Responsibilities",
-                Is65PlusExempt = true },
-
-            new() { Id = 49, QuestionText = "What is one responsibility that is only for United States citizens?",
-                FixedAnswers = ["serve on a jury", "vote in a federal election"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Rights and Responsibilities",
-                Is65PlusExempt = true },
-
-            new() { Id = 50, QuestionText = "Name one right only for United States citizens.",
-                FixedAnswers = ["vote in a federal election", "run for federal office"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Rights and Responsibilities" },
-
-            new() { Id = 51, QuestionText = "What are two rights of everyone living in the United States?",
-                FixedAnswers = ["freedom of expression", "freedom of speech", "freedom of assembly", "freedom to petition the government", "freedom of religion", "the right to bear arms"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Rights and Responsibilities" },
-
-            new() { Id = 52, QuestionText = "Who do we show loyalty to when we say the Pledge of Allegiance?",
-                FixedAnswers = ["the United States", "the flag"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Rights and Responsibilities" },
-
-            new() { Id = 53, QuestionText = "What is one promise you make when you become a United States citizen?",
-                FixedAnswers = ["give up loyalty to other countries", "defend the Constitution and laws of the United States", "obey the laws of the United States", "serve in the U.S. military (if needed)", "serve the nation if needed", "be loyal to the United States"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Rights and Responsibilities" },
-
-            new() { Id = 54, QuestionText = "How old do citizens have to be to vote for President?",
-                FixedAnswers = ["eighteen (18) and older"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Rights and Responsibilities",
-                Is65PlusExempt = true },
-
-            new() { Id = 55, QuestionText = "What are two ways that Americans can participate in their democracy?",
-                FixedAnswers = ["vote", "join a political party", "help with a campaign", "join a civic group", "join a community group", "give an elected official your opinion on an issue", "call Senators and Representatives", "publicly support or oppose an issue or policy", "run for office", "write to a newspaper"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Rights and Responsibilities",
-                Is65PlusExempt = true },
-
-            new() { Id = 56, QuestionText = "When is the last day you can send in federal income tax forms?",
-                FixedAnswers = ["April 15"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Rights and Responsibilities",
-                Is65PlusExempt = true },
-
-            new() { Id = 57, QuestionText = "When must all men register for the Selective Service?",
-                FixedAnswers = ["at age eighteen (18)", "between eighteen (18) and twenty-six (26)"],
-                Category = "AMERICAN GOVERNMENT", SubCategory = "Rights and Responsibilities",
-                Is65PlusExempt = true },
-
-            // ── AMERICAN HISTORY ── Colonial Period and Independence ──
-            new() { Id = 58, QuestionText = "What is one reason colonists came to America?",
-                FixedAnswers = ["freedom", "political liberty", "religious freedom", "economic opportunity", "practice their religion", "escape persecution"],
-                Category = "AMERICAN HISTORY", SubCategory = "Colonial Period and Independence" },
-
-            new() { Id = 59, QuestionText = "Who lived in America before the Europeans arrived?",
-                FixedAnswers = ["American Indians", "Native Americans"],
-                Category = "AMERICAN HISTORY", SubCategory = "Colonial Period and Independence" },
-
-            new() { Id = 60, QuestionText = "What group of people was taken to America and sold as slaves?",
-                FixedAnswers = ["Africans", "people from Africa"],
-                Category = "AMERICAN HISTORY", SubCategory = "Colonial Period and Independence" },
-
-            new() { Id = 61, QuestionText = "Why did the colonists fight the British?",
-                FixedAnswers = ["because of high taxes (taxation without representation)", "because the British army stayed in their houses (boarding, quartering)", "because they didn't have self-government"],
-                Category = "AMERICAN HISTORY", SubCategory = "Colonial Period and Independence" },
-
-            new() { Id = 62, QuestionText = "Who wrote the Declaration of Independence?",
-                FixedAnswers = ["(Thomas) Jefferson"],
-                Category = "AMERICAN HISTORY", SubCategory = "Colonial Period and Independence",
-                IsFrequent = true },
-
-            new() { Id = 63, QuestionText = "When was the Declaration of Independence adopted?",
-                FixedAnswers = ["July 4, 1776"],
-                Category = "AMERICAN HISTORY", SubCategory = "Colonial Period and Independence",
-                IsFrequent = true },
-
-            new() { Id = 64, QuestionText = "There were 13 original states. Name three.",
-                FixedAnswers = ["New Hampshire", "Massachusetts", "Rhode Island", "Connecticut", "New York", "New Jersey", "Pennsylvania", "Delaware", "Maryland", "Virginia", "North Carolina", "South Carolina", "Georgia"],
-                Category = "AMERICAN HISTORY", SubCategory = "Colonial Period and Independence" },
-
-            new() { Id = 65, QuestionText = "What happened at the Constitutional Convention?",
-                FixedAnswers = ["The Constitution was written.", "The Founding Fathers wrote the Constitution."],
-                Category = "AMERICAN HISTORY", SubCategory = "Colonial Period and Independence" },
-
-            new() { Id = 66, QuestionText = "When was the Constitution written?",
-                FixedAnswers = ["1787"],
-                Category = "AMERICAN HISTORY", SubCategory = "Colonial Period and Independence" },
-
-            new() { Id = 67, QuestionText = "The Federalist Papers supported the passage of the U.S. Constitution. Name one of the writers.",
-                FixedAnswers = ["(James) Madison", "(Alexander) Hamilton", "(John) Jay", "Publius"],
-                Category = "AMERICAN HISTORY", SubCategory = "Colonial Period and Independence" },
-
-            new() { Id = 68, QuestionText = "What is one thing Benjamin Franklin is famous for?",
-                FixedAnswers = ["U.S. diplomat", "oldest member of the Constitutional Convention", "first Postmaster General of the United States", "writer of Poor Richard's Almanac", "started the first free libraries"],
-                Category = "AMERICAN HISTORY", SubCategory = "Colonial Period and Independence" },
-
-            new() { Id = 69, QuestionText = "Who is the \"Father of Our Country\"?",
-                FixedAnswers = ["(George) Washington"],
-                Category = "AMERICAN HISTORY", SubCategory = "Colonial Period and Independence",
-                IsFrequent = true },
-
-            new() { Id = 70, QuestionText = "Who was the first President?",
-                FixedAnswers = ["(George) Washington"],
-                Category = "AMERICAN HISTORY", SubCategory = "Colonial Period and Independence",
-                IsFrequent = true, Is65PlusExempt = true },
-
-            // ── AMERICAN HISTORY ── 1800s ──
-            new() { Id = 71, QuestionText = "What territory did the United States buy from France in 1803?",
-                FixedAnswers = ["the Louisiana Territory", "Louisiana"],
-                Category = "AMERICAN HISTORY", SubCategory = "1800s",
-                Is65PlusExempt = true },
-
-            new() { Id = 72, QuestionText = "Name one war fought by the United States in the 1800s.",
-                FixedAnswers = ["War of 1812", "Mexican-American War", "Civil War", "Spanish-American War"],
-                Category = "AMERICAN HISTORY", SubCategory = "1800s",
-                Is65PlusExempt = true },
-
-            new() { Id = 73, QuestionText = "Name the U.S. war between the North and the South.",
-                FixedAnswers = ["the Civil War", "the War between the States"],
-                Category = "AMERICAN HISTORY", SubCategory = "1800s" },
-
-            new() { Id = 74, QuestionText = "Name one problem that led to the Civil War.",
-                FixedAnswers = ["slavery", "economic reasons", "states' rights"],
-                Category = "AMERICAN HISTORY", SubCategory = "1800s" },
-
-            new() { Id = 75, QuestionText = "What was one important thing that Abraham Lincoln did?",
-                FixedAnswers = ["freed the slaves (Emancipation Proclamation)", "saved the Union", "preserved the Union", "led the United States during the Civil War"],
-                Category = "AMERICAN HISTORY", SubCategory = "1800s",
-                IsFrequent = true, Is65PlusExempt = true },
-
-            new() { Id = 76, QuestionText = "What did the Emancipation Proclamation do?",
-                FixedAnswers = ["freed the slaves", "freed slaves in the Confederacy", "freed slaves in the Confederate states", "freed slaves in most Southern states"],
-                Category = "AMERICAN HISTORY", SubCategory = "1800s",
-                Is65PlusExempt = true },
-
-            new() { Id = 77, QuestionText = "What did Susan B. Anthony do?",
-                FixedAnswers = ["fought for women's rights", "fought for civil rights"],
-                Category = "AMERICAN HISTORY", SubCategory = "1800s",
-                Is65PlusExempt = true },
-
-            // ── AMERICAN HISTORY ── Recent American History ──
-            new() { Id = 78, QuestionText = "Name one war fought by the United States in the 1900s.",
-                FixedAnswers = ["World War I", "World War II", "Korean War", "Vietnam War", "(Persian) Gulf War"],
-                Category = "AMERICAN HISTORY", SubCategory = "Recent American History",
-                Is65PlusExempt = true },
-
-            new() { Id = 79, QuestionText = "Who was President during World War I?",
-                FixedAnswers = ["(Woodrow) Wilson"],
-                Category = "AMERICAN HISTORY", SubCategory = "Recent American History",
-                Is65PlusExempt = true },
-
-            new() { Id = 80, QuestionText = "Who was President during the Great Depression and World War II?",
-                FixedAnswers = ["(Franklin) Roosevelt"],
-                Category = "AMERICAN HISTORY", SubCategory = "Recent American History" },
-
-            new() { Id = 81, QuestionText = "Who did the United States fight in World War II?",
-                FixedAnswers = ["Japan, Germany, and Italy"],
-                Category = "AMERICAN HISTORY", SubCategory = "Recent American History",
-                Is65PlusExempt = true },
-
-            new() { Id = 82, QuestionText = "Before he was President, Eisenhower was a general. What war was he in?",
-                FixedAnswers = ["World War II"],
-                Category = "AMERICAN HISTORY", SubCategory = "Recent American History",
-                Is65PlusExempt = true },
-
-            new() { Id = 83, QuestionText = "During the Cold War, what was the main concern of the United States?",
-                FixedAnswers = ["Communism"],
-                Category = "AMERICAN HISTORY", SubCategory = "Recent American History",
-                Is65PlusExempt = true },
-
-            new() { Id = 84, QuestionText = "What movement tried to end racial discrimination?",
-                FixedAnswers = ["civil rights (movement)"],
-                Category = "AMERICAN HISTORY", SubCategory = "Recent American History",
-                Is65PlusExempt = true },
-
-            new() { Id = 85, QuestionText = "What did Martin Luther King, Jr. do?",
-                FixedAnswers = ["fought for civil rights", "worked for equality for all Americans"],
-                Category = "AMERICAN HISTORY", SubCategory = "Recent American History" },
-
-            new() { Id = 86, QuestionText = "What major event happened on September 11, 2001 in the United States?",
-                FixedAnswers = ["Terrorists attacked the United States."],
-                Category = "AMERICAN HISTORY", SubCategory = "Recent American History" },
-
-            new() { Id = 87, QuestionText = "Name one American Indian tribe in the United States.",
-                FixedAnswers = ["Cherokee", "Navajo", "Sioux", "Chippewa", "Choctaw", "Pueblo", "Apache", "Iroquois", "Creek", "Blackfeet", "Seminole", "Cheyenne", "Arawak", "Shawnee", "Mohegan", "Huron", "Oneida", "Lakota", "Crow", "Teton", "Hopi", "Inuit"],
-                Category = "AMERICAN HISTORY", SubCategory = "Recent American History",
-                Is65PlusExempt = true },
-
-            // ── INTEGRATED CIVICS ── Geography ──
-            new() { Id = 88, QuestionText = "Name one of the two longest rivers in the United States.",
-                FixedAnswers = ["Missouri River", "Mississippi River"],
-                Category = "INTEGRATED CIVICS", SubCategory = "Geography",
-                Is65PlusExempt = true },
-
-            new() { Id = 89, QuestionText = "What ocean is on the West Coast of the United States?",
-                FixedAnswers = ["Pacific Ocean"],
-                Category = "INTEGRATED CIVICS", SubCategory = "Geography",
-                Is65PlusExempt = true },
-
-            new() { Id = 90, QuestionText = "What ocean is on the East Coast of the United States?",
-                FixedAnswers = ["Atlantic Ocean"],
-                Category = "INTEGRATED CIVICS", SubCategory = "Geography",
-                Is65PlusExempt = true },
-
-            new() { Id = 91, QuestionText = "Name one U.S. territory.",
-                FixedAnswers = ["Puerto Rico", "U.S. Virgin Islands", "American Samoa", "Northern Mariana Islands", "Guam"],
-                Category = "INTEGRATED CIVICS", SubCategory = "Geography",
-                Is65PlusExempt = true },
-
-            new() { Id = 92, QuestionText = "Name one state that borders Canada.",
-                FixedAnswers = ["Maine", "New Hampshire", "Vermont", "New York", "Pennsylvania", "Ohio", "Michigan", "Minnesota", "North Dakota", "Montana", "Idaho", "Washington", "Alaska"],
-                Category = "INTEGRATED CIVICS", SubCategory = "Geography",
-                Is65PlusExempt = true },
-
-            new() { Id = 93, QuestionText = "Name one state that borders Mexico.",
-                FixedAnswers = ["California", "Arizona", "New Mexico", "Texas"],
-                Category = "INTEGRATED CIVICS", SubCategory = "Geography",
-                Is65PlusExempt = true },
-
-            new() { Id = 94, QuestionText = "What is the capital of the United States?",
-                FixedAnswers = ["Washington, D.C."],
-                Category = "INTEGRATED CIVICS", SubCategory = "Geography",
-                IsFrequent = true },
-
-            new() { Id = 95, QuestionText = "Where is the Statue of Liberty?",
-                FixedAnswers = ["New York (Harbor)", "Liberty Island", "New Jersey", "near New York City", "on the Hudson River"],
-                Category = "INTEGRATED CIVICS", SubCategory = "Geography",
-                Is65PlusExempt = true },
-
-            // ── INTEGRATED CIVICS ── Symbols ──
-            new() { Id = 96, QuestionText = "Why does the flag have 13 stripes?",
-                FixedAnswers = ["because there were 13 original colonies", "because the stripes represent the original colonies"],
-                Category = "INTEGRATED CIVICS", SubCategory = "Symbols",
-                Is65PlusExempt = true },
-
-            new() { Id = 97, QuestionText = "Why does the flag have 50 stars?",
-                FixedAnswers = ["because there is one star for each state", "because each star represents a state", "because there are 50 states"],
-                Category = "INTEGRATED CIVICS", SubCategory = "Symbols",
-                Is65PlusExempt = true },
-
-            new() { Id = 98, QuestionText = "What is the name of the national anthem?",
-                FixedAnswers = ["The Star-Spangled Banner"],
-                Category = "INTEGRATED CIVICS", SubCategory = "Symbols",
-                IsFrequent = true, Is65PlusExempt = true },
-
-            // ── INTEGRATED CIVICS ── Holidays ──
-            new() { Id = 99, QuestionText = "What do we call the first 10 amendments to the Constitution?",
-                FixedAnswers = ["the Bill of Rights"],
-                Category = "INTEGRATED CIVICS", SubCategory = "Holidays",
-                Is65PlusExempt = true },
-
-            new() { Id = 100, QuestionText = "Name two national U.S. holidays.",
-                FixedAnswers = ["New Year's Day", "Martin Luther King, Jr. Day", "Presidents' Day", "Memorial Day", "Independence Day", "Labor Day", "Columbus Day", "Veterans Day", "Thanksgiving", "Christmas"],
-                Category = "INTEGRATED CIVICS", SubCategory = "Holidays",
-                Is65PlusExempt = true },
+            // ── Principles of American Democracy ──────────────────────────────
+            Q(1,"Q001",GOV,"What is the supreme law of the land?",
+                ["the Constitution"],starred:true),
+            Q(2,"Q002",GOV,"What does the Constitution do?",
+                ["sets up the government","defines the government","protects basic rights of Americans"]),
+            Q(3,"Q003",GOV,"The idea of self-government is in the first three words of the Constitution. What are these words?",
+                ["We the People"]),
+            Q(4,"Q004",GOV,"What is an amendment?",
+                ["a change to the Constitution","an addition to the Constitution"]),
+            Q(5,"Q005",GOV,"What do we call the first ten amendments to the Constitution?",
+                ["the Bill of Rights"],starred:true),
+            Q(6,"Q006",GOV,"What is one right or freedom from the First Amendment?",
+                ["speech","religion","assembly","press","petition the government"],starred:true),
+            Q(7,"Q007",GOV,"How many amendments does the Constitution have?",
+                ["twenty-seven","27"]),
+            Q(8,"Q008",GOV,"What did the Declaration of Independence do?",
+                ["announced our independence from Great Britain","declared our independence from Great Britain","said that the United States is free from Great Britain"]),
+            Q(9,"Q009",GOV,"What are two rights in the Declaration of Independence?",
+                ["life","liberty","pursuit of happiness"]),
+            Q(10,"Q010",GOV,"What is freedom of religion?",
+                ["You can practice any religion, or not practice a religion."]),
+            Q(11,"Q011",GOV,"What is the economic system in the United States?",
+                ["capitalist economy","market economy"]),
+            Q(12,"Q012",GOV,"What is the \"rule of law\"?",
+                ["Everyone must follow the law.","Leaders must obey the law.","Government must obey the law.","No one is above the law."]),
+
+            // ── System of Government ──────────────────────────────────────────
+            Q(13,"Q013",GOV,"Name one branch or part of the government.",
+                ["Congress","legislative","President","executive","the courts","judicial"],starred:true),
+            Q(14,"Q014",GOV,"What stops one branch of government from becoming too powerful?",
+                ["checks and balances","separation of powers"]),
+            Q(15,"Q015",GOV,"Who is in charge of the executive branch?",
+                ["the President"]),
+            Q(16,"Q016",GOV,"Who makes federal laws?",
+                ["Congress","Senate and House of Representatives","the national legislature"]),
+            Q(17,"Q017",GOV,"What are the two parts of the U.S. Congress?",
+                ["the Senate and House of Representatives","the Senate and the House"],starred:true),
+            Q(18,"Q018",GOV,"How many U.S. Senators are there?",
+                ["one hundred","100"]),
+            Q(19,"Q019",GOV,"We elect a U.S. Senator for how many years?",
+                ["six","6"]),
+            Q(20,"Q020",GOV,"Who is one of your state's U.S. Senators now?",
+                [],stateSpecific:true),
+            Q(21,"Q021",GOV,"The House of Representatives has how many voting members?",
+                ["four hundred thirty-five","435"]),
+            Q(22,"Q022",GOV,"We elect a U.S. Representative for how many years?",
+                ["two","2"]),
+            Q(23,"Q023",GOV,"Name your U.S. Representative.",
+                [],stateSpecific:true),
+            Q(24,"Q024",GOV,"Who does a U.S. Senator represent?",
+                ["all people of the state"]),
+            Q(25,"Q025",GOV,"Why do some states have more Representatives than other states?",
+                ["because of the state's population","because they have more people","because some states have more people"]),
+            Q(26,"Q026",GOV,"We elect a President for how many years?",
+                ["four","4"]),
+            Q(27,"Q027",GOV,"In what month do we vote for President?",
+                ["November"]),
+            Q(28,"Q028",GOV,"What is the name of the President of the United States now?",
+                [],starred:true,federalExec:true),
+            Q(29,"Q029",GOV,"What is the name of the Vice President of the United States now?",
+                [],starred:true,federalExec:true),
+            Q(30,"Q030",GOV,"If the President can no longer serve, who becomes President?",
+                ["the Vice President"]),
+            Q(31,"Q031",GOV,"If both the President and the Vice President can no longer serve, who becomes President?",
+                ["the Speaker of the House"]),
+            Q(32,"Q032",GOV,"Who is the Commander in Chief of the military?",
+                ["the President"]),
+            Q(33,"Q033",GOV,"Who signs bills to become laws?",
+                ["the President"]),
+            Q(34,"Q034",GOV,"Who vetoes bills?",
+                ["the President"]),
+            Q(35,"Q035",GOV,"What does the President's Cabinet do?",
+                ["advises the President"]),
+            Q(36,"Q036",GOV,"What are two Cabinet-level positions?",
+                ["Secretary of Agriculture","Secretary of Commerce","Secretary of Defense",
+                 "Secretary of Education","Secretary of Energy","Secretary of Health and Human Services",
+                 "Secretary of Homeland Security","Secretary of Housing and Urban Development",
+                 "Secretary of the Interior","Secretary of Labor","Secretary of State",
+                 "Secretary of Transportation","Secretary of the Treasury","Secretary of Veterans Affairs",
+                 "Attorney General","Vice President"]),
+            Q(37,"Q037",GOV,"What does the judicial branch do?",
+                ["reviews laws","explains laws","resolves disputes","decides if a law goes against the Constitution"]),
+            Q(38,"Q038",GOV,"What is the highest court in the United States?",
+                ["the Supreme Court"],starred:true),
+            Q(39,"Q039",GOV,"How many justices are on the Supreme Court?",
+                ["nine","9"]),
+            Q(40,"Q040",GOV,"Who is the Chief Justice of the United States now?",
+                [],federalExec:true),
+            Q(41,"Q041",GOV,"Under our Constitution, some powers belong to the federal government. What is one power of the federal government?",
+                ["to print money","to declare war","to create an army","to make treaties"]),
+            Q(42,"Q042",GOV,"Under our Constitution, some powers belong to the states. What is one power of the states?",
+                ["provide schooling and education","provide protection (police)","provide safety (fire departments)","give a driver's license","approve zoning and land use"]),
+            Q(43,"Q043",GOV,"Who is the Governor of your state now?",
+                [],stateSpecific:true),
+            Q(44,"Q044",GOV,"What is the capital of your state?",
+                [],stateSpecific:true),
+            Q(45,"Q045",GOV,"What are the two major political parties in the United States?",
+                ["Democratic and Republican"],starred:true),
+
+            // ── Rights and Responsibilities ────────────────────────────────────
+            Q(46,"Q046",GOV,"What is the political party of the President now?",
+                [],federalExec:true),
+            Q(47,"Q047",GOV,"What is the name of the Speaker of the House of Representatives now?",
+                [],starred:true,federalExec:true),
+            Q(48,"Q048",GOV,"There are four amendments to the Constitution about who can vote. Describe one of them.",
+                ["Citizens eighteen (18) and older can vote.",
+                 "You don't have to pay a poll tax to vote.",
+                 "Any citizen can vote. (Women and men can vote.)",
+                 "A male citizen of any race can vote."]),
+            Q(49,"Q049",GOV,"What is one responsibility that is only for United States citizens?",
+                ["serve on a jury","vote in a federal election"]),
+            Q(50,"Q050",GOV,"Name one right only for United States citizens.",
+                ["vote in a federal election","run for federal office"]),
+            Q(51,"Q051",GOV,"What are two rights of everyone living in the United States?",
+                ["freedom of expression","freedom of speech","freedom of assembly",
+                 "freedom to petition the government","freedom of religion","the right to bear arms"]),
+            Q(52,"Q052",GOV,"Who do we show loyalty to when we say the Pledge of Allegiance?",
+                ["the United States","the flag"]),
+            Q(53,"Q053",GOV,"What is one promise you make when you become a United States citizen?",
+                ["give up loyalty to other countries","defend the Constitution and laws of the United States",
+                 "obey the laws of the United States","serve in the U.S. military (if needed)",
+                 "serve the nation (if needed)","be loyal to the United States"]),
+            Q(54,"Q054",GOV,"How old do citizens have to be to vote for President?",
+                ["eighteen (18) and older"]),
+            Q(55,"Q055",GOV,"What are two ways that Americans can participate in their democracy?",
+                ["vote","join a political party","help with a campaign","join a civic group",
+                 "join a community group","give an elected official your opinion on an issue",
+                 "call Senators and Representatives","publicly support or oppose an issue or policy",
+                 "run for office","write to a newspaper"]),
+            Q(56,"Q056",GOV,"When is the last day you can send in federal income tax forms?",
+                ["April 15"]),
+            Q(57,"Q057",GOV,"When must all men register for the Selective Service?",
+                ["at age eighteen (18)","between eighteen (18) and twenty-six (26)"]),
+
+            // ── Colonial Period and Independence ───────────────────────────────
+            Q(58,"Q058",HIS,"What is one reason colonists came to America?",
+                ["freedom","political liberty","religious freedom","economic opportunity",
+                 "practice their religion","escape persecution"]),
+            Q(59,"Q059",HIS,"Who lived in America before the Europeans arrived?",
+                ["American Indians","Native Americans"]),
+            Q(60,"Q060",HIS,"What group of people was taken to America and sold as slaves?",
+                ["Africans","people from Africa"]),
+            Q(61,"Q061",HIS,"Why did the colonists fight the British?",
+                ["because of high taxes (taxation without representation)",
+                 "because the British army stayed in their houses (boarding, quartering)",
+                 "because they didn't have self-government"]),
+            Q(62,"Q062",HIS,"Who wrote the Declaration of Independence?",
+                ["(Thomas) Jefferson"],starred:true),
+            Q(63,"Q063",HIS,"When was the Declaration of Independence adopted?",
+                ["July 4, 1776"],starred:true),
+            Q(64,"Q064",HIS,"There were 13 original states. Name three.",
+                ["New Hampshire","Massachusetts","Rhode Island","Connecticut","New York",
+                 "New Jersey","Pennsylvania","Delaware","Maryland","Virginia",
+                 "North Carolina","South Carolina","Georgia"]),
+            Q(65,"Q065",HIS,"What happened at the Constitutional Convention?",
+                ["The Constitution was written.","The Founding Fathers wrote the Constitution."]),
+            Q(66,"Q066",HIS,"When was the Constitution written?",
+                ["1787"]),
+            Q(67,"Q067",HIS,"The Federalist Papers supported the passage of the U.S. Constitution. Name one of the writers.",
+                ["(James) Madison","(Alexander) Hamilton","(John) Jay","Publius"]),
+            Q(68,"Q068",HIS,"What is one thing Benjamin Franklin is famous for?",
+                ["U.S. diplomat","oldest member of the Constitutional Convention",
+                 "first Postmaster General of the United States",
+                 "writer of Poor Richard's Almanac","started the first free libraries"]),
+            Q(69,"Q069",HIS,"Who is the \"Father of Our Country\"?",
+                ["(George) Washington"],starred:true),
+            Q(70,"Q070",HIS,"Who was the first President?",
+                ["(George) Washington"],starred:true),
+
+            // ── 1800s ─────────────────────────────────────────────────────────
+            Q(71,"Q071",HIS,"What territory did the United States buy from France in 1803?",
+                ["the Louisiana Territory","Louisiana"]),
+            Q(72,"Q072",HIS,"Name one war fought by the United States in the 1800s.",
+                ["War of 1812","Mexican-American War","Civil War","Spanish-American War"]),
+            Q(73,"Q073",HIS,"Name the U.S. war between the North and the South.",
+                ["the Civil War","the War between the States"]),
+            Q(74,"Q074",HIS,"Name one problem that led to the Civil War.",
+                ["slavery","economic reasons","states' rights"]),
+            Q(75,"Q075",HIS,"What was one important thing that Abraham Lincoln did?",
+                ["freed the slaves (Emancipation Proclamation)","saved (or preserved) the Union",
+                 "led the United States during the Civil War"],starred:true),
+            Q(76,"Q076",HIS,"What did the Emancipation Proclamation do?",
+                ["freed the slaves","freed slaves in the Confederacy",
+                 "freed slaves in the Confederate states","freed slaves in most Southern states"]),
+            Q(77,"Q077",HIS,"What did Susan B. Anthony do?",
+                ["fought for women's rights","fought for civil rights"]),
+
+            // ── Recent American History ────────────────────────────────────────
+            Q(78,"Q078",HIS,"Name one war fought by the United States in the 1900s.",
+                ["World War I","World War II","Korean War","Vietnam War","(Persian) Gulf War"]),
+            Q(79,"Q079",HIS,"Who was President during World War I?",
+                ["(Woodrow) Wilson"]),
+            Q(80,"Q080",HIS,"Who was President during the Great Depression and World War II?",
+                ["(Franklin) Roosevelt"]),
+            Q(81,"Q081",HIS,"Who did the United States fight in World War II?",
+                ["Japan, Germany, and Italy"]),
+            Q(82,"Q082",HIS,"Before he was President, Eisenhower was a general. What war was he in?",
+                ["World War II"]),
+            Q(83,"Q083",HIS,"During the Cold War, what was the main concern of the United States?",
+                ["Communism"]),
+            Q(84,"Q084",HIS,"What movement tried to end racial discrimination?",
+                ["civil rights (movement)"]),
+            Q(85,"Q085",HIS,"What did Martin Luther King, Jr. do?",
+                ["fought for civil rights","worked for equality for all Americans"]),
+            Q(86,"Q086",HIS,"What major event happened on September 11, 2001 in the United States?",
+                ["Terrorists attacked the United States."]),
+            Q(87,"Q087",HIS,"Name one American Indian tribe in the United States.",
+                ["Cherokee","Navajo","Sioux","Chippewa","Choctaw","Pueblo","Apache","Iroquois",
+                 "Creek","Blackfeet","Seminole","Cheyenne","Arawak","Shawnee","Mohegan","Huron",
+                 "Oneida","Lakota","Crow","Teton","Hopi","Inuit"]),
+
+            // ── Geography ─────────────────────────────────────────────────────
+            Q(88,"Q088",CIV,"Name one of the two longest rivers in the United States.",
+                ["Missouri River","Mississippi River"]),
+            Q(89,"Q089",CIV,"What ocean is on the West Coast of the United States?",
+                ["Pacific Ocean"]),
+            Q(90,"Q090",CIV,"What ocean is on the East Coast of the United States?",
+                ["Atlantic Ocean"]),
+            Q(91,"Q091",CIV,"Name one U.S. territory.",
+                ["Puerto Rico","U.S. Virgin Islands","American Samoa","Northern Mariana Islands","Guam"]),
+            Q(92,"Q092",CIV,"Name one state that borders Canada.",
+                ["Maine","New Hampshire","Vermont","New York","Pennsylvania","Ohio","Michigan",
+                 "Minnesota","North Dakota","Montana","Idaho","Washington","Alaska"]),
+            Q(93,"Q093",CIV,"Name one state that borders Mexico.",
+                ["California","Arizona","New Mexico","Texas"]),
+            Q(94,"Q094",CIV,"What is the capital of the United States?",
+                ["Washington, D.C."],starred:true),
+            Q(95,"Q095",CIV,"Where is the Statue of Liberty?",
+                ["New York (Harbor)","Liberty Island","New Jersey","near New York City","on the Hudson River"]),
+
+            // ── Symbols ───────────────────────────────────────────────────────
+            Q(96,"Q096",CIV,"Why does the flag have 13 stripes?",
+                ["because there were 13 original colonies","because the stripes represent the original colonies"]),
+            Q(97,"Q097",CIV,"Why does the flag have 50 stars?",
+                ["because there is one star for each state","because each star represents a state","because there are 50 states"]),
+            Q(98,"Q098",CIV,"What is the name of the national anthem?",
+                ["The Star-Spangled Banner"],starred:true),
+
+            // ── Holidays ──────────────────────────────────────────────────────
+            Q(99,"Q099",CIV,"What do we call the first 10 amendments to the Constitution?",
+                ["the Bill of Rights"]),
+            Q(100,"Q100",CIV,"Name two national U.S. holidays.",
+                ["New Year's Day","Martin Luther King, Jr. Day","Presidents' Day","Memorial Day",
+                 "Independence Day","Labor Day","Columbus Day","Veterans Day","Thanksgiving","Christmas"]),
         };
 
         await db.Questions.AddRangeAsync(questions);
@@ -519,128 +296,115 @@ public static class DbSeeder
     // ─────────────────────────────────────────────────────────────
     private static async Task SeedFederalOfficialsAsync(AppDbContext db)
     {
-        var officials = new List<FederalOfficial>
-        {
-            new() { Role = "President",       Name = "Donald J. Trump",  PartyAffiliation = "Republican" },
-            new() { Role = "VicePresident",   Name = "JD Vance",         PartyAffiliation = "Republican" },
-            new() { Role = "SpeakerOfHouse",  Name = "Mike Johnson",     PartyAffiliation = "Republican" },
-            new() { Role = "ChiefJustice",    Name = "John G. Roberts, Jr.", PartyAffiliation = null },
-        };
-
-        await db.FederalOfficials.AddRangeAsync(officials);
+        await db.FederalOfficials.AddRangeAsync(
+            new FederalOfficial { Title = "President",       Name = "Donald J. Trump",       Party = "Republican" },
+            new FederalOfficial { Title = "VicePresident",   Name = "JD Vance",              Party = "Republican" },
+            new FederalOfficial { Title = "SpeakerOfHouse",  Name = "Mike Johnson",          Party = "Republican" },
+            new FederalOfficial { Title = "ChiefJustice",    Name = "John G. Roberts, Jr.",  Party = "" }
+        );
     }
 
     // ─────────────────────────────────────────────────────────────
     //  STATE OFFICIALS  (all 50 states — update via Admin API)
-    //  Data reflects approximate 2025 state. Always verify before use.
     // ─────────────────────────────────────────────────────────────
     private static async Task SeedStateOfficialsAsync(AppDbContext db)
     {
-        var states = new List<StateOfficial>
-        {
-            new() { StateAbbr = "AL", StateName = "Alabama",        Governor = "Kay Ivey",                Capital = "Montgomery",   Senators = ["Tommy Tuberville", "Katie Britt"] },
-            new() { StateAbbr = "AK", StateName = "Alaska",         Governor = "Mike Dunleavy",           Capital = "Juneau",       Senators = ["Lisa Murkowski", "Dan Sullivan"] },
-            new() { StateAbbr = "AZ", StateName = "Arizona",        Governor = "Katie Hobbs",             Capital = "Phoenix",      Senators = ["Mark Kelly", "Ruben Gallego"] },
-            new() { StateAbbr = "AR", StateName = "Arkansas",       Governor = "Sarah Huckabee Sanders",  Capital = "Little Rock",  Senators = ["John Boozman", "Tom Cotton"] },
-            new() { StateAbbr = "CA", StateName = "California",     Governor = "Gavin Newsom",            Capital = "Sacramento",   Senators = ["Adam Schiff", "Alex Padilla"] },
-            new() { StateAbbr = "CO", StateName = "Colorado",       Governor = "Jared Polis",             Capital = "Denver",       Senators = ["Michael Bennet", "John Hickenlooper"] },
-            new() { StateAbbr = "CT", StateName = "Connecticut",    Governor = "Ned Lamont",              Capital = "Hartford",     Senators = ["Chris Murphy", "Richard Blumenthal"] },
-            new() { StateAbbr = "DE", StateName = "Delaware",       Governor = "Matt Meyer",              Capital = "Dover",        Senators = ["Chris Coons", "Lisa Blunt Rochester"] },
-            new() { StateAbbr = "FL", StateName = "Florida",        Governor = "Ron DeSantis",            Capital = "Tallahassee",  Senators = ["Rick Scott", "Ashley Moody"] },
-            new() { StateAbbr = "GA", StateName = "Georgia",        Governor = "Brian Kemp",              Capital = "Atlanta",      Senators = ["Jon Ossoff", "Raphael Warnock"] },
-            new() { StateAbbr = "HI", StateName = "Hawaii",         Governor = "Josh Green",              Capital = "Honolulu",     Senators = ["Brian Schatz", "Mazie Hirono"] },
-            new() { StateAbbr = "ID", StateName = "Idaho",          Governor = "Brad Little",             Capital = "Boise",        Senators = ["Mike Crapo", "Jim Risch"] },
-            new() { StateAbbr = "IL", StateName = "Illinois",       Governor = "JB Pritzker",             Capital = "Springfield",  Senators = ["Dick Durbin", "Tammy Duckworth"] },
-            new() { StateAbbr = "IN", StateName = "Indiana",        Governor = "Mike Braun",              Capital = "Indianapolis", Senators = ["Todd Young", "Jim Banks"] },
-            new() { StateAbbr = "IA", StateName = "Iowa",           Governor = "Kim Reynolds",            Capital = "Des Moines",   Senators = ["Chuck Grassley", "Joni Ernst"] },
-            new() { StateAbbr = "KS", StateName = "Kansas",         Governor = "Laura Kelly",             Capital = "Topeka",       Senators = ["Jerry Moran", "Roger Marshall"] },
-            new() { StateAbbr = "KY", StateName = "Kentucky",       Governor = "Andy Beshear",            Capital = "Frankfort",    Senators = ["Mitch McConnell", "Rand Paul"] },
-            new() { StateAbbr = "LA", StateName = "Louisiana",      Governor = "Jeff Landry",             Capital = "Baton Rouge",  Senators = ["Bill Cassidy", "John Kennedy"] },
-            new() { StateAbbr = "ME", StateName = "Maine",          Governor = "Janet Mills",             Capital = "Augusta",      Senators = ["Susan Collins", "Angus King"] },
-            new() { StateAbbr = "MD", StateName = "Maryland",       Governor = "Wes Moore",               Capital = "Annapolis",    Senators = ["Chris Van Hollen", "Angela Alsobrooks"] },
-            new() { StateAbbr = "MA", StateName = "Massachusetts",  Governor = "Maura Healey",            Capital = "Boston",       Senators = ["Elizabeth Warren", "Ed Markey"] },
-            new() { StateAbbr = "MI", StateName = "Michigan",       Governor = "Gretchen Whitmer",        Capital = "Lansing",      Senators = ["Gary Peters", "Elissa Slotkin"] },
-            new() { StateAbbr = "MN", StateName = "Minnesota",      Governor = "Tim Walz",                Capital = "Saint Paul",   Senators = ["Amy Klobuchar", "Tina Smith"] },
-            new() { StateAbbr = "MS", StateName = "Mississippi",    Governor = "Tate Reeves",             Capital = "Jackson",      Senators = ["Roger Wicker", "Cindy Hyde-Smith"] },
-            new() { StateAbbr = "MO", StateName = "Missouri",       Governor = "Mike Kehoe",              Capital = "Jefferson City",Senators = ["Josh Hawley", "Eric Schmitt"] },
-            new() { StateAbbr = "MT", StateName = "Montana",        Governor = "Greg Gianforte",          Capital = "Helena",       Senators = ["Steve Daines", "Tim Sheehy"] },
-            new() { StateAbbr = "NE", StateName = "Nebraska",       Governor = "Jim Pillen",              Capital = "Lincoln",      Senators = ["Pete Ricketts", "Deb Fischer"] },
-            new() { StateAbbr = "NV", StateName = "Nevada",         Governor = "Joe Lombardo",            Capital = "Carson City",  Senators = ["Catherine Cortez Masto", "Jacky Rosen"] },
-            new() { StateAbbr = "NH", StateName = "New Hampshire",  Governor = "Kelly Ayotte",            Capital = "Concord",      Senators = ["Jeanne Shaheen", "Maggie Hassan"] },
-            new() { StateAbbr = "NJ", StateName = "New Jersey",     Governor = "Jon Bramnick",            Capital = "Trenton",      Senators = ["Andy Kim", "Cory Booker"] },
-            new() { StateAbbr = "NM", StateName = "New Mexico",     Governor = "Michelle Lujan Grisham",  Capital = "Santa Fe",     Senators = ["Martin Heinrich", "Ben Ray Luján"] },
-            new() { StateAbbr = "NY", StateName = "New York",       Governor = "Kathy Hochul",            Capital = "Albany",       Senators = ["Chuck Schumer", "Kirsten Gillibrand"] },
-            new() { StateAbbr = "NC", StateName = "North Carolina", Governor = "Josh Stein",              Capital = "Raleigh",      Senators = ["Thom Tillis", "Ted Budd"] },
-            new() { StateAbbr = "ND", StateName = "North Dakota",   Governor = "Kelly Armstrong",         Capital = "Bismarck",     Senators = ["John Hoeven", "Kevin Cramer"] },
-            new() { StateAbbr = "OH", StateName = "Ohio",           Governor = "Mike DeWine",             Capital = "Columbus",     Senators = ["Bernie Moreno", "Jon Husted"] },
-            new() { StateAbbr = "OK", StateName = "Oklahoma",       Governor = "Kevin Stitt",             Capital = "Oklahoma City",Senators = ["James Lankford", "Markwayne Mullin"] },
-            new() { StateAbbr = "OR", StateName = "Oregon",         Governor = "Tina Kotek",              Capital = "Salem",        Senators = ["Ron Wyden", "Jeff Merkley"] },
-            new() { StateAbbr = "PA", StateName = "Pennsylvania",   Governor = "Josh Shapiro",            Capital = "Harrisburg",   Senators = ["John Fetterman", "Dave McCormick"] },
-            new() { StateAbbr = "RI", StateName = "Rhode Island",   Governor = "Dan McKee",               Capital = "Providence",   Senators = ["Jack Reed", "Sheldon Whitehouse"] },
-            new() { StateAbbr = "SC", StateName = "South Carolina", Governor = "Henry McMaster",          Capital = "Columbia",     Senators = ["Lindsey Graham", "Tim Scott"] },
-            new() { StateAbbr = "SD", StateName = "South Dakota",   Governor = "Kristi Noem",             Capital = "Pierre",       Senators = ["John Thune", "Mike Rounds"] },
-            new() { StateAbbr = "TN", StateName = "Tennessee",      Governor = "Bill Lee",                Capital = "Nashville",    Senators = ["Marsha Blackburn", "Bill Hagerty"] },
-            new() { StateAbbr = "TX", StateName = "Texas",          Governor = "Greg Abbott",             Capital = "Austin",       Senators = ["John Cornyn", "Ted Cruz"] },
-            new() { StateAbbr = "UT", StateName = "Utah",           Governor = "Spencer Cox",             Capital = "Salt Lake City",Senators = ["Mike Lee", "John Curtis"] },
-            new() { StateAbbr = "VT", StateName = "Vermont",        Governor = "Phil Scott",              Capital = "Montpelier",   Senators = ["Bernie Sanders", "Peter Welch"] },
-            new() { StateAbbr = "VA", StateName = "Virginia",       Governor = "Glenn Youngkin",          Capital = "Richmond",     Senators = ["Mark Warner", "Tim Kaine"] },
-            new() { StateAbbr = "WA", StateName = "Washington",     Governor = "Bob Ferguson",            Capital = "Olympia",      Senators = ["Patty Murray", "Maria Cantwell"] },
-            new() { StateAbbr = "WV", StateName = "West Virginia",  Governor = "Patrick Morrisey",        Capital = "Charleston",   Senators = ["Shelley Moore Capito", "Jim Justice"] },
-            new() { StateAbbr = "WI", StateName = "Wisconsin",      Governor = "Tony Evers",              Capital = "Madison",      Senators = ["Tammy Baldwin", "Ron Johnson"] },
-            new() { StateAbbr = "WY", StateName = "Wyoming",        Governor = "Mark Gordon",             Capital = "Cheyenne",     Senators = ["John Barrasso", "Cynthia Lummis"] },
-        };
+        static StateOfficial S(string code, string name, string capital, string gov, string s1, string s2)
+            => new() { StateCode = code, StateName = name, Capital = capital, Governor = gov, Senators = [s1, s2] };
 
-        await db.StateOfficials.AddRangeAsync(states);
+        await db.StateOfficials.AddRangeAsync(
+            S("AL","Alabama",          "Montgomery",    "Kay Ivey",                    "Tommy Tuberville",       "Katie Britt"),
+            S("AK","Alaska",           "Juneau",        "Mike Dunleavy",               "Lisa Murkowski",         "Dan Sullivan"),
+            S("AZ","Arizona",          "Phoenix",       "Katie Hobbs",                 "Mark Kelly",             "Ruben Gallego"),
+            S("AR","Arkansas",         "Little Rock",   "Sarah Huckabee Sanders",      "John Boozman",           "Tom Cotton"),
+            S("CA","California",       "Sacramento",    "Gavin Newsom",                "Adam Schiff",            "Alex Padilla"),
+            S("CO","Colorado",         "Denver",        "Jared Polis",                 "Michael Bennet",         "John Hickenlooper"),
+            S("CT","Connecticut",      "Hartford",      "Ned Lamont",                  "Chris Murphy",           "Richard Blumenthal"),
+            S("DE","Delaware",         "Dover",         "Matt Meyer",                  "Chris Coons",            "Lisa Blunt Rochester"),
+            S("FL","Florida",          "Tallahassee",   "Ron DeSantis",                "Rick Scott",             "Ashley Moody"),
+            S("GA","Georgia",          "Atlanta",       "Brian Kemp",                  "Jon Ossoff",             "Raphael Warnock"),
+            S("HI","Hawaii",           "Honolulu",      "Josh Green",                  "Brian Schatz",           "Mazie Hirono"),
+            S("ID","Idaho",            "Boise",         "Brad Little",                 "Mike Crapo",             "Jim Risch"),
+            S("IL","Illinois",         "Springfield",   "JB Pritzker",                 "Dick Durbin",            "Tammy Duckworth"),
+            S("IN","Indiana",          "Indianapolis",  "Mike Braun",                  "Todd Young",             "Jim Banks"),
+            S("IA","Iowa",             "Des Moines",    "Kim Reynolds",                "Chuck Grassley",         "Joni Ernst"),
+            S("KS","Kansas",           "Topeka",        "Laura Kelly",                 "Jerry Moran",            "Roger Marshall"),
+            S("KY","Kentucky",         "Frankfort",     "Andy Beshear",                "Mitch McConnell",        "Rand Paul"),
+            S("LA","Louisiana",        "Baton Rouge",   "Jeff Landry",                 "Bill Cassidy",           "John Kennedy"),
+            S("ME","Maine",            "Augusta",       "Janet Mills",                 "Susan Collins",          "Angus King"),
+            S("MD","Maryland",         "Annapolis",     "Wes Moore",                   "Chris Van Hollen",       "Angela Alsobrooks"),
+            S("MA","Massachusetts",    "Boston",        "Maura Healey",                "Elizabeth Warren",       "Ed Markey"),
+            S("MI","Michigan",         "Lansing",       "Gretchen Whitmer",            "Gary Peters",            "Elissa Slotkin"),
+            S("MN","Minnesota",        "Saint Paul",    "Tim Walz",                    "Amy Klobuchar",          "Tina Smith"),
+            S("MS","Mississippi",      "Jackson",       "Tate Reeves",                 "Roger Wicker",           "Cindy Hyde-Smith"),
+            S("MO","Missouri",         "Jefferson City","Mike Kehoe",                  "Josh Hawley",            "Eric Schmitt"),
+            S("MT","Montana",          "Helena",        "Greg Gianforte",              "Steve Daines",           "Tim Sheehy"),
+            S("NE","Nebraska",         "Lincoln",       "Jim Pillen",                  "Pete Ricketts",          "Deb Fischer"),
+            S("NV","Nevada",           "Carson City",   "Joe Lombardo",                "Catherine Cortez Masto", "Jacky Rosen"),
+            S("NH","New Hampshire",    "Concord",       "Kelly Ayotte",                "Jeanne Shaheen",         "Maggie Hassan"),
+            S("NJ","New Jersey",       "Trenton",       "Jon Bramnick",                "Andy Kim",               "Cory Booker"),
+            S("NM","New Mexico",       "Santa Fe",      "Michelle Lujan Grisham",      "Martin Heinrich",        "Ben Ray Luján"),
+            S("NY","New York",         "Albany",        "Kathy Hochul",                "Chuck Schumer",          "Kirsten Gillibrand"),
+            S("NC","North Carolina",   "Raleigh",       "Josh Stein",                  "Thom Tillis",            "Ted Budd"),
+            S("ND","North Dakota",     "Bismarck",      "Kelly Armstrong",             "John Hoeven",            "Kevin Cramer"),
+            S("OH","Ohio",             "Columbus",      "Mike DeWine",                 "Bernie Moreno",          "Jon Husted"),
+            S("OK","Oklahoma",         "Oklahoma City", "Kevin Stitt",                 "James Lankford",         "Markwayne Mullin"),
+            S("OR","Oregon",           "Salem",         "Tina Kotek",                  "Ron Wyden",              "Jeff Merkley"),
+            S("PA","Pennsylvania",     "Harrisburg",    "Josh Shapiro",                "John Fetterman",         "Dave McCormick"),
+            S("RI","Rhode Island",     "Providence",    "Dan McKee",                   "Jack Reed",              "Sheldon Whitehouse"),
+            S("SC","South Carolina",   "Columbia",      "Henry McMaster",              "Lindsey Graham",         "Tim Scott"),
+            S("SD","South Dakota",     "Pierre",        "Kristi Noem",                 "John Thune",             "Mike Rounds"),
+            S("TN","Tennessee",        "Nashville",     "Bill Lee",                    "Marsha Blackburn",       "Bill Hagerty"),
+            S("TX","Texas",            "Austin",        "Greg Abbott",                 "John Cornyn",            "Ted Cruz"),
+            S("UT","Utah",             "Salt Lake City","Spencer Cox",                 "Mike Lee",               "John Curtis"),
+            S("VT","Vermont",          "Montpelier",    "Phil Scott",                  "Bernie Sanders",         "Peter Welch"),
+            S("VA","Virginia",         "Richmond",      "Glenn Youngkin",              "Mark Warner",            "Tim Kaine"),
+            S("WA","Washington",       "Olympia",       "Bob Ferguson",                "Patty Murray",           "Maria Cantwell"),
+            S("WV","West Virginia",    "Charleston",    "Patrick Morrisey",            "Shelley Moore Capito",   "Jim Justice"),
+            S("WI","Wisconsin",        "Madison",       "Tony Evers",                  "Tammy Baldwin",          "Ron Johnson"),
+            S("WY","Wyoming",          "Cheyenne",      "Mark Gordon",                 "John Barrasso",          "Cynthia Lummis")
+        );
     }
 
     // ─────────────────────────────────────────────────────────────
-    //  FLUENCY SENTENCES  (USCIS reading/writing test vocabulary)
+    //  FLUENCY SENTENCES  (USCIS reading / writing test vocabulary)
     // ─────────────────────────────────────────────────────────────
     private static async Task SeedFluencySentencesAsync(AppDbContext db)
     {
-        var sentences = new List<FluencySentence>
-        {
-            // Reading — Level 1
-            new() { Text = "The flag is red, white, and blue.", Type = "reading", DifficultyLevel = 1, CoreVocabulary = ["flag", "red", "white", "blue"] },
-            new() { Text = "The President lives in the White House.", Type = "reading", DifficultyLevel = 1, CoreVocabulary = ["President", "White House"] },
-            new() { Text = "Congress makes the laws in the United States.", Type = "reading", DifficultyLevel = 1, CoreVocabulary = ["Congress", "laws", "United States"] },
-            new() { Text = "Citizens have the right to vote.", Type = "reading", DifficultyLevel = 1, CoreVocabulary = ["Citizens", "right", "vote"] },
-            new() { Text = "George Washington was the first President.", Type = "reading", DifficultyLevel = 1, CoreVocabulary = ["George Washington", "first", "President"] },
+        static FluencySentence F(string type, string text, List<string> vocab)
+            => new() { ExerciseType = type, SentenceText = text, CoreVocabulary = vocab };
 
-            // Reading — Level 2
-            new() { Text = "The Constitution is the supreme law of the land.", Type = "reading", DifficultyLevel = 2, CoreVocabulary = ["Constitution", "supreme", "law"] },
-            new() { Text = "There are one hundred senators in Congress.", Type = "reading", DifficultyLevel = 2, CoreVocabulary = ["senators", "Congress"] },
-            new() { Text = "The Bill of Rights protects the freedoms of Americans.", Type = "reading", DifficultyLevel = 2, CoreVocabulary = ["Bill of Rights", "freedoms", "Americans"] },
-            new() { Text = "Independence Day is on July fourth.", Type = "reading", DifficultyLevel = 2, CoreVocabulary = ["Independence Day", "July fourth"] },
-            new() { Text = "The Supreme Court is the highest court in the United States.", Type = "reading", DifficultyLevel = 2, CoreVocabulary = ["Supreme Court", "highest court"] },
-
-            // Reading — Level 3
-            new() { Text = "The Declaration of Independence was adopted on July 4, 1776.", Type = "reading", DifficultyLevel = 3, CoreVocabulary = ["Declaration of Independence", "adopted", "July 4, 1776"] },
-            new() { Text = "Checks and balances prevent any branch of government from becoming too powerful.", Type = "reading", DifficultyLevel = 3, CoreVocabulary = ["Checks and balances", "branch", "government"] },
-            new() { Text = "The Emancipation Proclamation freed the slaves in the Confederate states.", Type = "reading", DifficultyLevel = 3, CoreVocabulary = ["Emancipation Proclamation", "freed", "Confederate states"] },
-            new() { Text = "The First Amendment protects freedom of speech, religion, and the press.", Type = "reading", DifficultyLevel = 3, CoreVocabulary = ["First Amendment", "freedom of speech", "religion", "press"] },
-            new() { Text = "The United States fought against Japan, Germany, and Italy in World War II.", Type = "reading", DifficultyLevel = 3, CoreVocabulary = ["United States", "Japan", "Germany", "Italy", "World War II"] },
-
-            // Writing — Level 1
-            new() { Text = "I want to be a citizen.", Type = "writing", DifficultyLevel = 1, CoreVocabulary = ["citizen"] },
-            new() { Text = "He has a big dog.", Type = "writing", DifficultyLevel = 1, CoreVocabulary = [] },
-            new() { Text = "She came here today.", Type = "writing", DifficultyLevel = 1, CoreVocabulary = [] },
-            new() { Text = "The people vote in November.", Type = "writing", DifficultyLevel = 1, CoreVocabulary = ["vote", "November"] },
-            new() { Text = "I pay my taxes.", Type = "writing", DifficultyLevel = 1, CoreVocabulary = ["taxes"] },
-
-            // Writing — Level 2
-            new() { Text = "Washington, D.C. is the capital of the United States.", Type = "writing", DifficultyLevel = 2, CoreVocabulary = ["Washington D.C.", "capital"] },
-            new() { Text = "The President signs bills to become laws.", Type = "writing", DifficultyLevel = 2, CoreVocabulary = ["President", "bills", "laws"] },
-            new() { Text = "All people want to be free.", Type = "writing", DifficultyLevel = 2, CoreVocabulary = ["free"] },
-            new() { Text = "Abraham Lincoln was a great President.", Type = "writing", DifficultyLevel = 2, CoreVocabulary = ["Abraham Lincoln", "President"] },
-            new() { Text = "Citizens must obey the laws.", Type = "writing", DifficultyLevel = 2, CoreVocabulary = ["Citizens", "obey", "laws"] },
-
-            // Writing — Level 3
-            new() { Text = "The Civil War was fought between the North and the South.", Type = "writing", DifficultyLevel = 3, CoreVocabulary = ["Civil War", "North", "South"] },
-            new() { Text = "The government is made up of three branches.", Type = "writing", DifficultyLevel = 3, CoreVocabulary = ["government", "three branches"] },
-            new() { Text = "American citizens have the right to freedom of speech.", Type = "writing", DifficultyLevel = 3, CoreVocabulary = ["citizens", "freedom of speech"] },
-        };
-
-        await db.FluencySentences.AddRangeAsync(sentences);
+        await db.FluencySentences.AddRangeAsync(
+            // Reading
+            F("reading","The flag is red, white, and blue.",["flag","red","white","blue"]),
+            F("reading","The President lives in the White House.",["President","White House"]),
+            F("reading","Congress makes the laws in the United States.",["Congress","laws","United States"]),
+            F("reading","Citizens have the right to vote.",["Citizens","right","vote"]),
+            F("reading","George Washington was the first President.",["George Washington","first","President"]),
+            F("reading","The Constitution is the supreme law of the land.",["Constitution","supreme","law"]),
+            F("reading","There are one hundred senators in Congress.",["senators","Congress"]),
+            F("reading","The Bill of Rights protects the freedoms of Americans.",["Bill of Rights","freedoms","Americans"]),
+            F("reading","Independence Day is on July fourth.",["Independence Day","July fourth"]),
+            F("reading","The Supreme Court is the highest court in the United States.",["Supreme Court","highest court"]),
+            F("reading","The Declaration of Independence was adopted on July 4, 1776.",["Declaration of Independence","adopted","1776"]),
+            F("reading","Checks and balances prevent any branch of government from becoming too powerful.",["Checks and balances","branch","government"]),
+            F("reading","The Emancipation Proclamation freed the slaves in the Confederate states.",["Emancipation Proclamation","freed","Confederate states"]),
+            F("reading","The First Amendment protects freedom of speech, religion, and the press.",["First Amendment","freedom of speech","religion","press"]),
+            F("reading","The United States fought against Japan, Germany, and Italy in World War II.",["Japan","Germany","Italy","World War II"]),
+            // Writing
+            F("writing","I want to be a citizen.",["citizen"]),
+            F("writing","He has a big dog.",[]),
+            F("writing","She came here today.",[]),
+            F("writing","The people vote in November.",["vote","November"]),
+            F("writing","I pay my taxes.",["taxes"]),
+            F("writing","Washington, D.C. is the capital of the United States.",["Washington D.C.","capital"]),
+            F("writing","The President signs bills to become laws.",["President","bills","laws"]),
+            F("writing","All people want to be free.",["free"]),
+            F("writing","Abraham Lincoln was a great President.",["Abraham Lincoln","President"]),
+            F("writing","Citizens must obey the laws.",["Citizens","obey","laws"]),
+            F("writing","The Civil War was fought between the North and the South.",["Civil War","North","South"]),
+            F("writing","The government is made up of three branches.",["government","three branches"]),
+            F("writing","American citizens have the right to freedom of speech.",["citizens","freedom of speech"])
+        );
     }
 }

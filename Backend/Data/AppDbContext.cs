@@ -15,21 +15,22 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        var jsonOptions = new JsonSerializerOptions();
+        var jsonOpts = new JsonSerializerOptions();
 
         var stringListConverter = new ValueConverter<List<string>, string>(
-            v => JsonSerializer.Serialize(v, jsonOptions),
-            v => JsonSerializer.Deserialize<List<string>>(v, jsonOptions) ?? new List<string>()
+            v => JsonSerializer.Serialize(v, jsonOpts),
+            v => JsonSerializer.Deserialize<List<string>>(v, jsonOpts) ?? new List<string>()
         );
 
         var stringListComparer = new ValueComparer<List<string>>(
-            (c1, c2) => c1 != null && c2 != null && c1.SequenceEqual(c2),
-            c => c.Aggregate(0, (a, v) => HashCode.Combine(a, v.GetHashCode())),
+            (a, b) => a != null && b != null && a.SequenceEqual(b),
+            c => c.Aggregate(0, (hash, v) => HashCode.Combine(hash, v.GetHashCode())),
             c => c.ToList()
         );
 
         modelBuilder.Entity<Question>(e =>
         {
+            e.HasIndex(q => q.QuestionId).IsUnique();
             e.Property(q => q.FixedAnswers)
              .HasConversion(stringListConverter)
              .Metadata.SetValueComparer(stringListComparer);
@@ -37,10 +38,15 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
         modelBuilder.Entity<StateOfficial>(e =>
         {
-            e.HasIndex(s => s.StateAbbr).IsUnique();
+            e.HasIndex(s => s.StateCode).IsUnique();
             e.Property(s => s.Senators)
              .HasConversion(stringListConverter)
              .Metadata.SetValueComparer(stringListComparer);
+        });
+
+        modelBuilder.Entity<FederalOfficial>(e =>
+        {
+            e.HasIndex(f => f.Title).IsUnique();
         });
 
         modelBuilder.Entity<FluencySentence>(e =>
@@ -48,11 +54,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(f => f.CoreVocabulary)
              .HasConversion(stringListConverter)
              .Metadata.SetValueComparer(stringListComparer);
-        });
-
-        modelBuilder.Entity<FederalOfficial>(e =>
-        {
-            e.HasIndex(f => f.Role).IsUnique();
         });
     }
 }

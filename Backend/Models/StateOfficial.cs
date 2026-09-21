@@ -3,10 +3,9 @@ namespace CitizenFlowApi.Models;
 public class StateOfficial
 {
     public int Id { get; set; }
-    public string StateAbbr { get; set; } = "";  // Two-letter code: "WI"
-    public string StateName { get; set; } = "";  // Full name: "Wisconsin"
-    public string Governor { get; set; } = "";
-    public List<string> Senators { get; set; } = []; // JSON — exactly 2 entries
+    public string StateCode { get; set; } = "";         // Two-letter: "WI"
+    public string StateName { get; set; } = "";         // "Wisconsin"
     public string Capital { get; set; } = "";
-    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+    public string Governor { get; set; } = "";
+    public List<string> Senators { get; set; } = [];    // JSON — always 2 entries
 }

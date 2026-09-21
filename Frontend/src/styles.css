@@ -1,0 +1,126 @@
+/* ── Design Tokens ────────────────────────────────────────────────────────── */
+:root {
+  --accent:        #4f46e5;
+  --accent-dark:   #312e81;
+  --accent-tint:   #eef2ff;
+  --accent-mid:    #6366f1;
+  --success:       #16a34a;
+  --success-tint:  #dcfce7;
+  --warn:          #f59e0b;
+  --warn-tint:     #fef3c7;
+  --danger:        #ef4444;
+  --danger-tint:   #fee2e2;
+  --canvas:        #f8f9ff;
+  --surface:       #ffffff;
+  --surface-2:     #f1f3fb;
+  --border:        #e2e6f3;
+  --text:          #1e1b4b;
+  --text-muted:    #6b7280;
+  --text-faint:    #9ca3af;
+  --shadow-card:   0 4px 12px rgba(0, 0, 0, 0.05);
+  --shadow-lg:     0 8px 24px rgba(79, 70, 229, 0.12);
+  --radius:        12px;
+  --radius-sm:     8px;
+  --nav-height:    64px;
+}
+
+/* ── Reset ────────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background: var(--canvas);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* ── Page shell ───────────────────────────────────────────────────────────── */
+app-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+/* ── Typography helpers ───────────────────────────────────────────────────── */
+h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.02em; }
+h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+h3 { font-size: 15px; font-weight: 600; }
+h4 { font-size: 13px; font-weight: 600; }
+
+/* ── Shared component helpers ─────────────────────────────────────────────── */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 20px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+}
+
+.badge-indigo  { background: var(--accent-tint); color: var(--accent); }
+.badge-success { background: var(--success-tint); color: var(--success); }
+.badge-warn    { background: var(--warn-tint);    color: #92400e; }
+.badge-danger  { background: var(--danger-tint);  color: #b91c1c; }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.btn:active { transform: scale(0.97); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.btn-primary   { background: var(--accent); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--accent-mid); }
+.btn-secondary { background: var(--accent-tint); color: var(--accent); }
+.btn-secondary:hover:not(:disabled) { background: #e0e7ff; }
+.btn-ghost     { background: transparent; color: var(--text-muted); border: 1px solid var(--border); }
+.btn-ghost:hover:not(:disabled) { background: var(--surface-2); }
+
+.progress-bar-track {
+  height: 8px;
+  background: var(--surface-2);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
+/* ── Bottom nav spacer ────────────────────────────────────────────────────── */
+.page-content {
+  flex: 1;
+  padding: 16px 16px calc(var(--nav-height) + 16px);
+  max-width: 480px;
+  margin: 0 auto;
+  width: 100%;
+}
