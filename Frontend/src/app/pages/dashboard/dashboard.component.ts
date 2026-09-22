@@ -220,6 +220,28 @@ import { SpeakerButtonComponent } from '../../components/speaker-button/speaker-
       margin-top: 2px;
     }
 
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tip-button {
+      width: 42px;
+      height: 42px;
+      border-radius: 12px;
+      border: none;
+      background: #eef2ff;
+      font-size: 20px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .tip-button:hover { background: #e0e7ff; }
+    .tip-button:active { transform: scale(0.92); }
+
     .mastery-badge {
       display: flex;
       flex-direction: column;
@@ -431,9 +453,17 @@ import { SpeakerButtonComponent } from '../../components/speaker-button/speaker-
           <h1>{{ greeting() }}</h1>
           <p>{{ state.questions().length }} questions · {{ state.settings().homeState }}</p>
         </div>
-        <div class="mastery-badge">
-          <span class="pct">{{ state.masteryPercent() }}%</span>
-          <span class="lbl">Mastery</span>
+        <div class="header-actions">
+          <button
+            class="tip-button"
+            routerLink="/support"
+            aria-label="Support CitizenFlow"
+            title="Support us"
+          >❤️</button>
+          <div class="mastery-badge">
+            <span class="pct">{{ state.masteryPercent() }}%</span>
+            <span class="lbl">Mastery</span>
+          </div>
         </div>
       </div>
 

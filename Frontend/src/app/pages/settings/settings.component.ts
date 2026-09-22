@@ -1,6 +1,7 @@
 import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { AppStateService } from '../../services/app-state.service';
 import { CivicsApiService, StateOfficial } from '../../services/civics-api.service';
 
@@ -295,6 +296,18 @@ const TTS_RATES = [
         </div>
       </div>
 
+      <!-- ── Support ── -->
+      <div class="section">
+        <div class="section-header"><h2>Support this app</h2></div>
+        <button class="setting-row" style="width:100%;background:none;border:none;text-align:left;cursor:pointer;" (click)="goSupport()">
+          <div>
+            <div class="setting-label">❤️ Support this app</div>
+            <div class="setting-desc">Optional tips keep it free and support St. Paul Children's Hospital</div>
+          </div>
+          <span style="font-size:18px;color:#9ca3af;">›</span>
+        </button>
+      </div>
+
       <!-- ── Danger Zone ── -->
       <div class="danger-section">
         @if (!confirmReset()) {
@@ -316,6 +329,7 @@ const TTS_RATES = [
 export class SettingsComponent implements OnInit {
   protected state = inject(AppStateService);
   private api     = inject(CivicsApiService);
+  private router  = inject(Router);
 
   protected readonly TTS_RATES = TTS_RATES;
 
@@ -372,5 +386,9 @@ export class SettingsComponent implements OnInit {
   doReset(): void {
     this.state.resetProgress();
     this.confirmReset.set(false);
+  }
+
+  goSupport(): void {
+    this.router.navigate(['/support']);
   }
 }
