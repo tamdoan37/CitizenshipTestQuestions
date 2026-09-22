@@ -1,15 +1,203 @@
-import { Component, inject, computed, signal, OnInit, ChangeDetectionStrategy } from '@angular/core';
+import { Component, inject, computed, signal, effect, OnInit, ChangeDetectionStrategy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { AppStateService } from '../../services/app-state.service';
+import { CivicsApiService, QuestionOfTheDay } from '../../services/civics-api.service';
+import { NotificationService } from '../../services/notification.service';
+import { SpeakerButtonComponent } from '../../components/speaker-button/speaker-button.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, SpeakerButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: [`
     .page { padding: 20px 16px 80px; max-width: 480px; margin: 0 auto; }
+
+    /* ── Question of the Day ──────────────────────── */
+    .qotd {
+      background: linear-gradient(155deg, #312e81 0%, #4338ca 100%);
+      border-radius: 16px;
+      padding: 18px 18px 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 28px rgba(49, 46, 129, 0.32);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .qotd::after {
+      content: '';
+      position: absolute;
+      top: -40px; right: -40px;
+      width: 140px; height: 140px;
+      background: radial-gradient(circle, rgba(129,140,248,0.35), transparent 70%);
+      pointer-events: none;
+    }
+
+    .qotd-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .qotd-badge {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      background: #fef3c7;
+      color: #92400e;
+      padding: 4px 9px;
+      border-radius: 6px;
+    }
+
+    .qotd-date {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .qotd-body {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .qotd-question {
+      flex: 1;
+      font-size: 16px;
+      font-weight: 600;
+      line-height: 1.5;
+      color: #f5f3ff;
+    }
+
+    .qotd-qid {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      color: #c7d2fe;
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .reveal-btn {
+      width: 100%;
+      padding: 11px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      background: rgba(255,255,255,0.10);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .reveal-btn:hover { background: rgba(255,255,255,0.18); }
+
+    .answer-panel {
+      margin-top: 12px;
+      background: rgba(0,0,0,0.22);
+      border-radius: 10px;
+      padding: 12px 14px;
+      animation: expand 0.28s ease;
+    }
+
+    @keyframes expand {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .answer-panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .answer-panel-head .lbl {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+    }
+
+    .answer-list { list-style: none; }
+
+    .answer-list li {
+      font-size: 14px;
+      font-weight: 500;
+      color: #e0e7ff;
+      padding: 5px 0;
+      display: flex;
+      align-items: baseline;
+      gap: 7px;
+    }
+    .answer-list li::before { content: '✓'; color: #4ade80; font-weight: 800; }
+
+    /* ── Reminder toggle ── */
+    .reminder-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 14px;
+      flex-wrap: wrap;
+    }
+
+    .reminder-btn {
+      flex: 1;
+      min-width: 160px;
+      padding: 10px;
+      border-radius: 10px;
+      border: none;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s, background 0.15s;
+    }
+
+    .reminder-off { background: #fbbf24; color: #78350f; }
+    .reminder-off:hover { background: #f59e0b; }
+    .reminder-on  { background: #16a34a; color: #fff; }
+    .reminder-on:hover { background: #15803d; }
+
+    .reminder-test {
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1.5px solid rgba(255,255,255,0.25);
+      background: transparent;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .reminder-test:hover { background: rgba(255,255,255,0.12); }
+
+    .reminder-hint {
+      width: 100%;
+      font-size: 11px;
+      color: rgba(255,255,255,0.55);
+      margin-top: 2px;
+    }
+
+    .time-input {
+      background: rgba(255,255,255,0.14);
+      border: 1.5px solid rgba(255,255,255,0.25);
+      border-radius: 8px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 10px;
+      cursor: pointer;
+      color-scheme: dark;
+    }
 
     /* ── Header ───────────────────────────────────── */
     .greeting-row {
@@ -249,6 +437,78 @@ import { AppStateService } from '../../services/app-state.service';
         </div>
       </div>
 
+      <!-- ── Question of the Day ── -->
+      @if (qotd(); as q) {
+        <div class="qotd">
+          <div class="qotd-top">
+            <span class="qotd-badge">⭐ Question of the Day</span>
+            <span class="qotd-date">{{ formatDate(q.date) }}</span>
+          </div>
+
+          <div class="qotd-body">
+            <div class="qotd-question">
+              <span class="qotd-qid">{{ q.questionId }} · {{ q.category }}</span>
+              {{ q.questionText }}
+            </div>
+            <app-speaker-button
+              [text]="q.questionText"
+              [elementId]="'qotd-q'"
+              size="md"
+              variant="white"
+            />
+          </div>
+
+          <button class="reveal-btn" (click)="toggleReveal()">
+            {{ revealAnswer() ? '▲ Hide Answer' : '▼ Reveal Answer' }}
+          </button>
+
+          @if (revealAnswer()) {
+            <div class="answer-panel">
+              <div class="answer-panel-head">
+                <span class="lbl">Official Answer{{ q.fixedAnswers.length > 1 ? 's' : '' }}</span>
+                <app-speaker-button
+                  [text]="answerSpeech(q)"
+                  [elementId]="'qotd-a'"
+                  size="sm"
+                  variant="white"
+                />
+              </div>
+              <ul class="answer-list">
+                @for (ans of q.fixedAnswers; track ans) {
+                  <li>{{ ans }}</li>
+                }
+              </ul>
+            </div>
+          }
+
+          <!-- Daily reminder controls -->
+          @if (notif.isSupported()) {
+            <div class="reminder-row">
+              @if (!notif.dailyNotificationEnabled()) {
+                <button class="reminder-btn reminder-off" (click)="enableReminder(q)">
+                  🔔 Enable Daily Reminder
+                </button>
+              } @else {
+                <button class="reminder-btn reminder-on" (click)="disableReminder()">
+                  ✓ Reminder On · {{ notif.scheduledTime() }}
+                </button>
+                <input
+                  class="time-input"
+                  type="time"
+                  [value]="notif.scheduledTime()"
+                  (change)="onTimeChange($event, q)"
+                  aria-label="Reminder time"
+                />
+                <button class="reminder-test" (click)="testNotification(q)">Test</button>
+              }
+              @if (reminderHint()) {
+                <p class="reminder-hint">{{ reminderHint() }}</p>
+              }
+            </div>
+          }
+        </div>
+      }
+
       @if (state.isLoadingCivics()) {
         <div class="loading-row">
           <div class="spinner"></div>
@@ -318,6 +578,12 @@ import { AppStateService } from '../../services/app-state.service';
 })
 export class DashboardComponent implements OnInit {
   protected state = inject(AppStateService);
+  protected notif = inject(NotificationService);
+  private api = inject(CivicsApiService);
+
+  qotd = signal<QuestionOfTheDay | null>(null);
+  revealAnswer = signal(false);
+  reminderHint = signal('');
 
   greeting = computed(() => {
     const h = new Date().getHours();
@@ -326,10 +592,65 @@ export class DashboardComponent implements OnInit {
     return 'Good evening 👋';
   });
 
+  constructor() {
+    // Refetch the daily question whenever the home state changes.
+    effect(() => {
+      const { homeState, testVersion } = this.state.settings();
+      this.loadQotd(homeState, testVersion);
+    });
+  }
+
   ngOnInit(): void {
     if (!this.state.hydrated() && !this.state.isLoadingCivics()) {
       const { homeState, testVersion } = this.state.settings();
       this.state.loadQuestions(homeState, testVersion);
     }
+  }
+
+  private loadQotd(homeState: string, testVersion: string): void {
+    this.api.getQuestionOfTheDay(homeState, testVersion).subscribe(q => {
+      this.qotd.set(q);
+      this.revealAnswer.set(false);
+      if (q) this.notif.restoreOnBoot(q);
+    });
+  }
+
+  toggleReveal(): void {
+    this.revealAnswer.update(v => !v);
+  }
+
+  answerSpeech(q: QuestionOfTheDay): string {
+    return `Acceptable answer${q.fixedAnswers.length > 1 ? 's' : ''}: ${q.fixedAnswers.join(', or ')}`;
+  }
+
+  formatDate(iso: string): string {
+    const d = new Date(iso + 'T00:00:00');
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  }
+
+  async enableReminder(q: QuestionOfTheDay): Promise<void> {
+    const granted = await this.notif.requestPermission();
+    if (granted) {
+      this.notif.scheduleDailyReminder(this.notif.scheduledTime(), q);
+      this.reminderHint.set(`You'll get a daily notification at ${this.notif.scheduledTime()}.`);
+    } else {
+      this.reminderHint.set('Notifications are blocked. Enable them in your browser settings.');
+    }
+  }
+
+  disableReminder(): void {
+    this.notif.cancelDailyReminder();
+    this.reminderHint.set('Daily reminders turned off.');
+  }
+
+  onTimeChange(event: Event, q: QuestionOfTheDay): void {
+    const time = (event.target as HTMLInputElement).value || '09:00';
+    this.notif.scheduleDailyReminder(time, q);
+    this.reminderHint.set(`Reminder time updated to ${time}.`);
+  }
+
+  testNotification(q: QuestionOfTheDay): void {
+    this.notif.sendImmediateNotification(q);
   }
 }

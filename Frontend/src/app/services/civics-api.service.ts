@@ -39,6 +39,14 @@ export interface FluencySentence {
   coreVocabulary: string[];
 }
 
+export interface QuestionOfTheDay {
+  questionId: string;
+  questionText: string;
+  category: string;
+  fixedAnswers: string[];
+  date: string;
+}
+
 // ── Service ───────────────────────────────────────────────────────────────────
 
 const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // 24 hours
@@ -105,6 +113,18 @@ export class CivicsApiService {
         const cached = this.readCache<Question[]>(`cf-questions-${stateCode}-${version}`);
         return of(cached?.filter(q => q.category === category) ?? []);
       })
+    );
+  }
+
+  // ── Question of the Day ──────────────────────────────────────────────────────
+
+  getQuestionOfTheDay(stateCode: string, version = '2008'): Observable<QuestionOfTheDay | null> {
+    const cacheKey = `cf-qotd-${stateCode}-${version}`;
+    const params = new HttpParams().set('stateCode', stateCode).set('version', version);
+
+    return this.http.get<QuestionOfTheDay>(`${this.baseUrl}/api/quiz/question-of-the-day`, { params }).pipe(
+      tap(data => this.writeCache(cacheKey, data)),
+      catchError(() => of(this.readCache<QuestionOfTheDay>(cacheKey) ?? this.getFallbackQotd(stateCode, version)))
     );
   }
 
@@ -221,5 +241,24 @@ export class CivicsApiService {
         isStarredQuestion: true, isStateSpecific: false, isFederalExecutive: false
       },
     ];
+  }
+
+  /** Deterministic offline QOTD: same UTC day → same fallback question. */
+  private getFallbackQotd(stateCode: string, version: string): QuestionOfTheDay {
+    const date = new Date().toISOString().slice(0, 10);
+    const pool = this.readCache<Question[]>(`cf-questions-${stateCode}-${version}`)
+      ?? this.getFallbackQuestions();
+
+    let seed = 0;
+    for (const ch of date) seed = (seed * 31 + ch.charCodeAt(0)) | 0;
+    const q = pool[Math.abs(seed) % pool.length];
+
+    return {
+      questionId: q.questionId,
+      questionText: q.questionText,
+      category: q.category,
+      fixedAnswers: q.fixedAnswers,
+      date,
+    };
   }
 }

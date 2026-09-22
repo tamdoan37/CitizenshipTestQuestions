@@ -4,11 +4,13 @@ import {
 import { CommonModule } from '@angular/common';
 import { Question } from '../../services/civics-api.service';
 import { AppStateService } from '../../services/app-state.service';
+import { SpeechService } from '../../services/speech.service';
+import { SpeakerButtonComponent } from '../speaker-button/speaker-button.component';
 
 @Component({
   selector: 'app-flashcard',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, SpeakerButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: [`
     :host { display: block; }
@@ -280,16 +282,13 @@ import { AppStateService } from '../../services/app-state.service';
           {{ isStarred() ? '★' : '☆' }}
         </button>
 
-        <!-- TTS button -->
-        <button
-          class="ctrl-btn"
-          [class.tts-active]="isSpeaking()"
-          (click)="speakVisible(); $event.stopPropagation()"
-          aria-label="Read aloud"
-          title="Read aloud"
-        >
-          🔊
-        </button>
+        <!-- TTS button (reads whichever face is showing) -->
+        <app-speaker-button
+          [text]="visibleText()"
+          [elementId]="speakerId()"
+          size="md"
+          variant="primary"
+        />
 
         <!-- Prev / Next -->
         <div class="nav-btns">
@@ -313,13 +312,25 @@ export class FlashcardComponent {
   @Output() prev       = new EventEmitter<void>();
   @Output() starToggle = new EventEmitter<string>();
 
-  private state = inject(AppStateService);
+  private state  = inject(AppStateService);
+  private speech = inject(SpeechService);
 
   isFlipped  = signal(false);
-  isSpeaking = signal(false);
 
   isStarred  = computed(() => this.starredIds.has(this.question?.questionId ?? ''));
   isMastered = computed(() => this.state.isMastered(this.question?.questionId ?? ''));
+
+  /** Text for the currently visible face. */
+  visibleText = computed(() =>
+    this.isFlipped()
+      ? `Acceptable answers: ${this.question?.fixedAnswers?.join(', or ') ?? ''}`
+      : (this.question?.questionText ?? '')
+  );
+
+  /** Distinct id per face so highlighting tracks front vs back independently. */
+  speakerId = computed(() =>
+    `flash-${this.question?.questionId ?? 'na'}-${this.isFlipped() ? 'a' : 'q'}`
+  );
 
   catBadgeClass = computed(() => {
     const c = this.question?.category ?? '';
@@ -330,43 +341,16 @@ export class FlashcardComponent {
 
   flip(): void {
     this.isFlipped.update(v => !v);
-    this.stopSpeaking();
+    this.speech.stop();
   }
 
   toggleStar(): void {
     this.starToggle.emit(this.question.questionId);
   }
 
-  speakVisible(): void {
-    if (!('speechSynthesis' in window)) return;
-
-    const text = this.isFlipped()
-      ? `Acceptable answers: ${this.question.fixedAnswers.join(', or ')}`
-      : this.question.questionText;
-
-    this.stopSpeaking();
-
-    // 60ms settle to fix stop → speak race condition
-    setTimeout(() => {
-      const utt  = new SpeechSynthesisUtterance(text);
-      utt.lang   = 'en-US';
-      utt.rate   = this.state.settings().ttsRate;
-      utt.pitch  = 1.0;
-      utt.onstart = () => this.isSpeaking.set(true);
-      utt.onend   = () => this.isSpeaking.set(false);
-      utt.onerror = () => this.isSpeaking.set(false);
-      window.speechSynthesis.speak(utt);
-    }, 60);
-  }
-
-  private stopSpeaking(): void {
-    if ('speechSynthesis' in window) window.speechSynthesis.cancel();
-    this.isSpeaking.set(false);
-  }
-
   /** Reset flip state when navigating to a new card. */
   ngOnChanges(): void {
     this.isFlipped.set(false);
-    this.stopSpeaking();
+    this.speech.stop();
   }
 }

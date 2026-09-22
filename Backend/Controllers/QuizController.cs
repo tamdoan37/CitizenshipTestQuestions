@@ -95,6 +95,40 @@ public class QuizController(AppDbContext db) : ControllerBase
         return Ok(questions.Select(q => PatchQuestion(q, state, officials)));
     }
 
+    // ── GET /api/quiz/question-of-the-day?stateCode=WI&version=2008 ─────────
+    [HttpGet("question-of-the-day")]
+    public async Task<IActionResult> GetQuestionOfTheDay(
+        [FromQuery] string stateCode = "WI",
+        [FromQuery] string version = "2008")
+    {
+        var questions = await db.Questions
+            .Where(q => q.TestVersion == version)
+            .OrderBy(q => q.QuestionId)
+            .AsNoTracking()
+            .ToListAsync();
+
+        if (questions.Count == 0)
+            return NotFound(new { message = "No questions available for the requested version." });
+
+        // Deterministic daily seed: same UTC calendar day → same question for everyone.
+        var dateString = DateTime.UtcNow.ToString("yyyy-MM-dd");
+        var seed = 0;
+        foreach (var ch in dateString) seed = unchecked(seed * 31 + ch);
+        var index = Math.Abs(seed) % questions.Count;
+
+        var (state, officials) = await LoadContextAsync(stateCode);
+        var chosen = questions[index];
+
+        return Ok(new
+        {
+            chosen.QuestionId,
+            chosen.QuestionText,
+            chosen.Category,
+            FixedAnswers = PatchAnswers(chosen, state, officials),
+            Date = dateString,
+        });
+    }
+
     // ── Helpers ─────────────────────────────────────────────────────────────
 
     private async Task<(StateOfficial? state, Dictionary<string, FederalOfficial> officials)>
@@ -116,7 +150,26 @@ public class QuizController(AppDbContext db) : ControllerBase
         StateOfficial? state,
         Dictionary<string, FederalOfficial> officials)
     {
-        var answers = q.QuestionId switch
+        return new
+        {
+            q.Id,
+            q.QuestionId,
+            q.TestVersion,
+            q.Category,
+            q.QuestionText,
+            FixedAnswers = PatchAnswers(q, state, officials),
+            q.IsStarredQuestion,
+            q.IsStateSpecific,
+            q.IsFederalExecutive,
+        };
+    }
+
+    private static List<string> PatchAnswers(
+        Question q,
+        StateOfficial? state,
+        Dictionary<string, FederalOfficial> officials)
+    {
+        return q.QuestionId switch
         {
             "Q020" => state?.Senators?.Count > 0
                         ? state.Senators
@@ -146,19 +199,6 @@ public class QuizController(AppDbContext db) : ControllerBase
                         ? new List<string> { speaker.Name }
                         : new List<string> { "Speaker of the House data unavailable." },
             _ => q.FixedAnswers
-        };
-
-        return new
-        {
-            q.Id,
-            q.QuestionId,
-            q.TestVersion,
-            q.Category,
-            q.QuestionText,
-            FixedAnswers = answers,
-            q.IsStarredQuestion,
-            q.IsStateSpecific,
-            q.IsFederalExecutive,
         };
     }
 }

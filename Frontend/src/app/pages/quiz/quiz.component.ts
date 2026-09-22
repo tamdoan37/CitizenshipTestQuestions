@@ -7,6 +7,7 @@ import { AppStateService } from '../../services/app-state.service';
 import { SrsService } from '../../services/srs.service';
 import { ScoringService, QuizResult, QUIZ_SIZE, PASS_THRESHOLD } from '../../services/scoring.service';
 import { Question } from '../../services/civics-api.service';
+import { SpeakerButtonComponent } from '../../components/speaker-button/speaker-button.component';
 
 type Phase = 'start' | 'question' | 'result';
 
@@ -18,7 +19,7 @@ interface QuizOption {
 @Component({
   selector: 'app-quiz',
   standalone: true,
-  imports: [CommonModule, RouterModule],
+  imports: [CommonModule, RouterModule, SpeakerButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: [`
     .page { padding: 20px 16px 80px; max-width: 480px; margin: 0 auto; }
@@ -140,8 +141,11 @@ interface QuizOption {
 
     .options-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
 
+    .option-row { display: flex; align-items: stretch; gap: 8px; }
+
     .option-btn {
       width: 100%;
+      flex: 1;
       padding: 14px 16px;
       border-radius: 10px;
       border: 2px solid #e2e6f3;
@@ -317,13 +321,21 @@ interface QuizOption {
         </div>
 
         <div class="q-card">
-          <span class="q-id-badge">{{ currentQuestion()!.questionId }}</span>
+          <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+            <span class="q-id-badge">{{ currentQuestion()!.questionId }}</span>
+            <app-speaker-button
+              [text]="currentQuestion()!.questionText"
+              [elementId]="'quiz-q-' + currentQuestion()!.questionId"
+              size="sm"
+              variant="primary"
+            />
+          </div>
           <p class="q-text">{{ currentQuestion()!.questionText }}</p>
         </div>
 
         <ul class="options-list">
           @for (opt of currentOptions(); track opt.text) {
-            <li>
+            <li class="option-row">
               <button
                 class="option-btn"
                 [class.correct]="selectedAnswer() !== null && opt.isCorrect"
@@ -334,6 +346,14 @@ interface QuizOption {
               >
                 {{ opt.text }}
               </button>
+              @if (selectedAnswer() !== null) {
+                <app-speaker-button
+                  [text]="opt.text"
+                  [elementId]="'quiz-opt-' + currentIndex() + '-' + opt.text"
+                  size="sm"
+                  variant="subtle"
+                />
+              }
             </li>
           }
         </ul>
