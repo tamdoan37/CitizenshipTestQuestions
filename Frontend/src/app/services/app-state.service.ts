@@ -39,7 +39,7 @@ export class AppStateService {
   settings = signal<AppSettings>(
     tryParse<AppSettings>(LS_SETTINGS) ?? {
       homeState:   'WI',
-      testVersion: '2008',
+      testVersion: '2025',
       ttsRate:     0.9,
     }
   );

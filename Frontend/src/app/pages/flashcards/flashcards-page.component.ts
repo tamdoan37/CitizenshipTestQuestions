@@ -287,6 +287,7 @@ export class FlashcardsPageComponent implements OnInit {
   catShortName(cat: string): string {
     if (cat.includes('GOVERNMENT')) return '🏛 Gov';
     if (cat.includes('HISTORY'))    return '📜 History';
+    if (cat.includes('SYMBOLS'))    return '🎆 Symbols';
     if (cat.includes('CIVICS'))     return '🗺 Civics';
     return cat;
   }

@@ -230,14 +230,13 @@ const TTS_RATES = [
         <div class="setting-row">
           <div>
             <div class="setting-label">Test Version</div>
-            <div class="setting-desc">2008 is used for most applicants</div>
+            <div class="setting-desc">2025 test (128 questions) for N-400 filed on/after Oct 20, 2025</div>
           </div>
           <select
             [value]="state.settings().testVersion"
             (change)="onVersionChange($event)"
           >
-            <option value="2008">2008 (Standard)</option>
-            <option value="2020">2020 (Updated)</option>
+            <option value="2025">2025 (128 questions)</option>
           </select>
         </div>
       </div>
@@ -310,7 +309,7 @@ const TTS_RATES = [
         }
       </div>
 
-      <p class="version-row">CitizenFlow v1.0 · USCIS 2008 Test</p>
+      <p class="version-row">CitizenFlow v1.0 · USCIS 2025 Test (128 Questions)</p>
     </div>
   `,
 })

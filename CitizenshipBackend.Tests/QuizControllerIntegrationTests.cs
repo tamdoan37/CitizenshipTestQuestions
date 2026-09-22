@@ -31,20 +31,20 @@ public class QuizControllerIntegrationTests : IClassFixture<CustomWebApplication
     }
 
     [Fact]
-    public async Task Questions_Version2008_ReturnsOnly2008Questions()
+    public async Task Questions_Version2025_ReturnsOnly2025Questions()
     {
-        var questions = await GetQuestionsAsync("?version=2008");
+        var questions = await GetQuestionsAsync("?version=2025");
 
-        Assert.NotEmpty(questions);
-        Assert.All(questions, q => Assert.Equal("2008", q.TestVersion));
+        Assert.Equal(128, questions.Count);
+        Assert.All(questions, q => Assert.Equal("2025", q.TestVersion));
     }
 
     [Fact]
     public async Task Questions_ForWisconsin_PatchesGovernorWithSeededName()
     {
-        var questions = await GetQuestionsAsync("?stateCode=WI&version=2008");
+        var questions = await GetQuestionsAsync("?stateCode=WI&version=2025");
 
-        var governorQuestion = questions.Single(q => q.QuestionText.Contains("Governor of your state"));
+        var governorQuestion = questions.Single(q => q.QuestionText.Contains("governor of your state"));
         Assert.Contains("Tony Evers", governorQuestion.FixedAnswers);
         // The default placeholder must have been replaced.
         Assert.DoesNotContain(governorQuestion.FixedAnswers, a => a.Contains("unavailable"));
@@ -53,10 +53,10 @@ public class QuizControllerIntegrationTests : IClassFixture<CustomWebApplication
     [Fact]
     public async Task Questions_ForWisconsin_PatchesSenatorsWithSeededNames()
     {
-        var questions = await GetQuestionsAsync("?stateCode=WI&version=2008");
+        var questions = await GetQuestionsAsync("?stateCode=WI&version=2025");
 
         var senatorQuestion = questions.Single(q =>
-            q.QuestionText.Contains("state's U.S. Senators"));
+            q.QuestionText.Contains("state's U.S. senators"));
         Assert.Contains("Tammy Baldwin", senatorQuestion.FixedAnswers);
         Assert.Contains("Ron Johnson", senatorQuestion.FixedAnswers);
     }
@@ -64,7 +64,7 @@ public class QuizControllerIntegrationTests : IClassFixture<CustomWebApplication
     [Fact]
     public async Task Questions_PatchesPresidentWithSeededName()
     {
-        var questions = await GetQuestionsAsync("?stateCode=WI&version=2008");
+        var questions = await GetQuestionsAsync("?stateCode=WI&version=2025");
 
         var presidentQuestion = questions.Single(q =>
             q.QuestionText.Contains("name of the President of the United States now"));
@@ -74,7 +74,7 @@ public class QuizControllerIntegrationTests : IClassFixture<CustomWebApplication
     [Fact]
     public async Task Questions_WithInvalidStateCode_DoesNotReturn500()
     {
-        var response = await _client.GetAsync("/api/quiz/questions?stateCode=ZZ&version=2008");
+        var response = await _client.GetAsync("/api/quiz/questions?stateCode=ZZ&version=2025");
 
         Assert.NotEqual(HttpStatusCode.InternalServerError, response.StatusCode);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
@@ -84,7 +84,7 @@ public class QuizControllerIntegrationTests : IClassFixture<CustomWebApplication
         Assert.NotEmpty(questions);
 
         // State-specific answers should fall back gracefully, not throw.
-        var governorQuestion = questions.Single(q => q.QuestionText.Contains("Governor of your state"));
+        var governorQuestion = questions.Single(q => q.QuestionText.Contains("governor of your state"));
         Assert.NotEmpty(governorQuestion.FixedAnswers);
     }
 
@@ -92,9 +92,9 @@ public class QuizControllerIntegrationTests : IClassFixture<CustomWebApplication
     public async Task QuestionOfTheDay_ReturnsDeterministicQuestionForToday()
     {
         var first = await _client.GetFromJsonAsync<QotdDto>(
-            "/api/quiz/question-of-the-day?stateCode=WI&version=2008", JsonOpts);
+            "/api/quiz/question-of-the-day?stateCode=WI&version=2025", JsonOpts);
         var second = await _client.GetFromJsonAsync<QotdDto>(
-            "/api/quiz/question-of-the-day?stateCode=WI&version=2008", JsonOpts);
+            "/api/quiz/question-of-the-day?stateCode=WI&version=2025", JsonOpts);
 
         Assert.NotNull(first);
         Assert.NotNull(second);
@@ -106,7 +106,7 @@ public class QuizControllerIntegrationTests : IClassFixture<CustomWebApplication
     [Fact]
     public async Task Questions_JsonUsesCamelCase()
     {
-        var response = await _client.GetAsync("/api/quiz/questions?stateCode=WI&version=2008");
+        var response = await _client.GetAsync("/api/quiz/questions?stateCode=WI&version=2025");
         var raw = await response.Content.ReadAsStringAsync();
 
         // camelCase keys must be present (matches the Angular Question interface).

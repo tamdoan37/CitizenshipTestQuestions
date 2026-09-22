@@ -58,7 +58,7 @@ export class CivicsApiService {
 
   // ── Questions ──────────────────────────────────────────────────────────────
 
-  getQuestions(stateCode: string, version = '2008'): Observable<Question[]> {
+  getQuestions(stateCode: string, version = '2025'): Observable<Question[]> {
     const cacheKey = `cf-questions-${stateCode}-${version}`;
     const params = new HttpParams()
       .set('stateCode', stateCode)
@@ -70,7 +70,7 @@ export class CivicsApiService {
     );
   }
 
-  getRandomQuestions(stateCode: string, count = 20, version = '2008'): Observable<Question[]> {
+  getRandomQuestions(stateCode: string, count = 20, version = '2025'): Observable<Question[]> {
     const params = new HttpParams()
       .set('stateCode', stateCode)
       .set('count', count)
@@ -86,7 +86,7 @@ export class CivicsApiService {
     );
   }
 
-  getStarredQuestions(stateCode: string, version = '2008'): Observable<Question[]> {
+  getStarredQuestions(stateCode: string, version = '2025'): Observable<Question[]> {
     const params = new HttpParams().set('stateCode', stateCode).set('version', version);
     return this.http.get<Question[]>(`${this.baseUrl}/api/quiz/starred`, { params }).pipe(
       catchError(() => {
@@ -96,14 +96,14 @@ export class CivicsApiService {
     );
   }
 
-  getCategories(version = '2008'): Observable<string[]> {
+  getCategories(version = '2025'): Observable<string[]> {
     const params = new HttpParams().set('version', version);
     return this.http.get<string[]>(`${this.baseUrl}/api/quiz/categories`, { params }).pipe(
-      catchError(() => of(['AMERICAN GOVERNMENT', 'AMERICAN HISTORY', 'INTEGRATED CIVICS']))
+      catchError(() => of(['AMERICAN GOVERNMENT', 'AMERICAN HISTORY', 'SYMBOLS AND HOLIDAYS']))
     );
   }
 
-  getByCategory(category: string, stateCode: string, version = '2008'): Observable<Question[]> {
+  getByCategory(category: string, stateCode: string, version = '2025'): Observable<Question[]> {
     const params = new HttpParams()
       .set('category', category)
       .set('stateCode', stateCode)
@@ -118,7 +118,7 @@ export class CivicsApiService {
 
   // ── Question of the Day ──────────────────────────────────────────────────────
 
-  getQuestionOfTheDay(stateCode: string, version = '2008'): Observable<QuestionOfTheDay | null> {
+  getQuestionOfTheDay(stateCode: string, version = '2025'): Observable<QuestionOfTheDay | null> {
     const cacheKey = `cf-qotd-${stateCode}-${version}`;
     const params = new HttpParams().set('stateCode', stateCode).set('version', version);
 
@@ -206,39 +206,39 @@ export class CivicsApiService {
     // Embedded minimal fallback so the app works with no network and no cache.
     return [
       {
-        id: 1, questionId: 'Q001', testVersion: '2008',
+        id: 2, questionId: 'Q002', testVersion: '2025',
         category: 'AMERICAN GOVERNMENT',
         questionText: 'What is the supreme law of the land?',
-        fixedAnswers: ['the Constitution'],
+        fixedAnswers: ['(U.S.) Constitution'],
         isStarredQuestion: true, isStateSpecific: false, isFederalExecutive: false
       },
       {
-        id: 5, questionId: 'Q005', testVersion: '2008',
+        id: 6, questionId: 'Q006', testVersion: '2025',
         category: 'AMERICAN GOVERNMENT',
-        questionText: 'What do we call the first ten amendments to the Constitution?',
-        fixedAnswers: ['the Bill of Rights'],
-        isStarredQuestion: true, isStateSpecific: false, isFederalExecutive: false
+        questionText: 'What does the Bill of Rights protect?',
+        fixedAnswers: ['(The basic) rights of Americans', '(The basic) rights of people living in the United States'],
+        isStarredQuestion: false, isStateSpecific: false, isFederalExecutive: false
       },
       {
-        id: 6, questionId: 'Q006', testVersion: '2008',
+        id: 16, questionId: 'Q016', testVersion: '2025',
         category: 'AMERICAN GOVERNMENT',
-        questionText: 'What is one right or freedom from the First Amendment?',
-        fixedAnswers: ['speech', 'religion', 'assembly', 'press', 'petition the government'],
-        isStarredQuestion: true, isStateSpecific: false, isFederalExecutive: false
+        questionText: 'Name the three branches of government.',
+        fixedAnswers: ['Legislative, executive, and judicial', 'Congress, president, and the courts'],
+        isStarredQuestion: false, isStateSpecific: false, isFederalExecutive: false
       },
       {
-        id: 13, questionId: 'Q013', testVersion: '2008',
+        id: 65, questionId: 'Q065', testVersion: '2025',
         category: 'AMERICAN GOVERNMENT',
-        questionText: 'Name one branch or part of the government.',
-        fixedAnswers: ['Congress', 'legislative', 'President', 'executive', 'the courts', 'judicial'],
-        isStarredQuestion: true, isStateSpecific: false, isFederalExecutive: false
+        questionText: 'What are three rights of everyone living in the United States?',
+        fixedAnswers: ['Freedom of expression', 'Freedom of speech', 'Freedom of assembly', 'Freedom to petition the government', 'Freedom of religion', 'The right to bear arms'],
+        isStarredQuestion: false, isStateSpecific: false, isFederalExecutive: false
       },
       {
-        id: 17, questionId: 'Q017', testVersion: '2008',
-        category: 'AMERICAN GOVERNMENT',
-        questionText: 'What are the two parts of the U.S. Congress?',
-        fixedAnswers: ['the Senate and House of Representatives'],
-        isStarredQuestion: true, isStateSpecific: false, isFederalExecutive: false
+        id: 123, questionId: 'Q123', testVersion: '2025',
+        category: 'SYMBOLS AND HOLIDAYS',
+        questionText: 'What is the name of the national anthem?',
+        fixedAnswers: ['The Star-Spangled Banner'],
+        isStarredQuestion: false, isStateSpecific: false, isFederalExecutive: false
       },
     ];
   }

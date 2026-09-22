@@ -13,7 +13,7 @@ public class QuizController(AppDbContext db) : ControllerBase
     [HttpGet("questions")]
     public async Task<IActionResult> GetQuestions(
         [FromQuery] string stateCode = "WI",
-        [FromQuery] string version = "2008")
+        [FromQuery] string version = "2025")
     {
         var questions = await db.Questions
             .Where(q => q.TestVersion == version)
@@ -30,7 +30,7 @@ public class QuizController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> GetRandom(
         [FromQuery] string stateCode = "WI",
         [FromQuery] int count = 20,
-        [FromQuery] string version = "2008")
+        [FromQuery] string version = "2025")
     {
         var questions = await db.Questions
             .Where(q => q.TestVersion == version)
@@ -52,7 +52,7 @@ public class QuizController(AppDbContext db) : ControllerBase
     [HttpGet("starred")]
     public async Task<IActionResult> GetStarred(
         [FromQuery] string stateCode = "WI",
-        [FromQuery] string version = "2008")
+        [FromQuery] string version = "2025")
     {
         var questions = await db.Questions
             .Where(q => q.TestVersion == version && q.IsStarredQuestion)
@@ -66,7 +66,7 @@ public class QuizController(AppDbContext db) : ControllerBase
 
     // ── GET /api/quiz/categories?version=2008 ───────────────────────────────
     [HttpGet("categories")]
-    public async Task<IActionResult> GetCategories([FromQuery] string version = "2008")
+    public async Task<IActionResult> GetCategories([FromQuery] string version = "2025")
     {
         var categories = await db.Questions
             .Where(q => q.TestVersion == version)
@@ -83,7 +83,7 @@ public class QuizController(AppDbContext db) : ControllerBase
     public async Task<IActionResult> GetByCategory(
         [FromQuery] string category,
         [FromQuery] string stateCode = "WI",
-        [FromQuery] string version = "2008")
+        [FromQuery] string version = "2025")
     {
         var questions = await db.Questions
             .Where(q => q.TestVersion == version && q.Category == category)
@@ -99,7 +99,7 @@ public class QuizController(AppDbContext db) : ControllerBase
     [HttpGet("question-of-the-day")]
     public async Task<IActionResult> GetQuestionOfTheDay(
         [FromQuery] string stateCode = "WI",
-        [FromQuery] string version = "2008")
+        [FromQuery] string version = "2025")
     {
         var questions = await db.Questions
             .Where(q => q.TestVersion == version)
@@ -171,33 +171,38 @@ public class QuizController(AppDbContext db) : ControllerBase
     {
         return q.QuestionId switch
         {
-            "Q020" => state?.Senators?.Count > 0
+            // Q023 — one of your state's U.S. senators
+            "Q023" => state?.Senators?.Count > 0
                         ? state.Senators
                         : new List<string> { "Senator information unavailable — update via Admin API." },
-            "Q023" => state != null
+            // Q029 — your U.S. representative (district-specific; guide the applicant)
+            "Q029" => state != null
                         ? new List<string> { $"Contact the U.S. House of Representatives for {state.StateName} district information." }
                         : new List<string> { "U.S. Representative (state not set)" },
-            "Q028" => officials.TryGetValue("President", out var pres)
-                        ? new List<string> { pres.Name }
-                        : new List<string> { "President data unavailable." },
-            "Q029" => officials.TryGetValue("VicePresident", out var vp)
-                        ? new List<string> { vp.Name }
-                        : new List<string> { "Vice President data unavailable." },
-            "Q040" => officials.TryGetValue("ChiefJustice", out var cj)
-                        ? new List<string> { cj.Name }
-                        : new List<string> { "Chief Justice data unavailable." },
-            "Q043" => state != null
-                        ? new List<string> { state.Governor }
-                        : new List<string> { "Governor data unavailable." },
-            "Q044" => state != null
-                        ? new List<string> { state.Capital }
-                        : new List<string> { "Capital data unavailable." },
-            "Q046" => officials.TryGetValue("President", out var presParty) && !string.IsNullOrEmpty(presParty.Party)
-                        ? new List<string> { presParty.Party }
-                        : new List<string> { "Party data unavailable." },
-            "Q047" => officials.TryGetValue("SpeakerOfHouse", out var speaker)
+            // Q030 — Speaker of the House now
+            "Q030" => officials.TryGetValue("SpeakerOfHouse", out var speaker)
                         ? new List<string> { speaker.Name }
                         : new List<string> { "Speaker of the House data unavailable." },
+            // Q038 — President now
+            "Q038" => officials.TryGetValue("President", out var pres)
+                        ? new List<string> { pres.Name }
+                        : new List<string> { "President data unavailable." },
+            // Q039 — Vice President now
+            "Q039" => officials.TryGetValue("VicePresident", out var vp)
+                        ? new List<string> { vp.Name }
+                        : new List<string> { "Vice President data unavailable." },
+            // Q057 — Chief Justice now
+            "Q057" => officials.TryGetValue("ChiefJustice", out var cj)
+                        ? new List<string> { cj.Name }
+                        : new List<string> { "Chief Justice data unavailable." },
+            // Q061 — Governor of your state now
+            "Q061" => state != null
+                        ? new List<string> { state.Governor }
+                        : new List<string> { "Governor data unavailable." },
+            // Q062 — capital of your state
+            "Q062" => state != null
+                        ? new List<string> { state.Capital }
+                        : new List<string> { "Capital data unavailable." },
             _ => q.FixedAnswers
         };
     }

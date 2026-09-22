@@ -6,7 +6,7 @@ import { SrsService } from './srs.service';
 
 const sampleQuestions: Question[] = [
   {
-    id: 1, questionId: 'Q001', testVersion: '2008', category: 'GOV',
+    id: 1, questionId: 'Q001', testVersion: '2025', category: 'GOV',
     questionText: 'Supreme law?', fixedAnswers: ['the Constitution'],
     isStarredQuestion: false, isStateSpecific: false, isFederalExecutive: false,
   },
@@ -33,7 +33,7 @@ describe('AppStateService', () => {
     const state = TestBed.inject(AppStateService);
     expect(state).toBeTruthy();
     expect(state.settings().homeState).toBe('WI');
-    expect(state.settings().testVersion).toBe('2008');
+    expect(state.settings().testVersion).toBe('2025');
   });
 
   it('updates the settings signal when updateSettings is called', () => {
@@ -41,7 +41,7 @@ describe('AppStateService', () => {
     state.updateSettings({ homeState: 'TX' });
     expect(state.settings().homeState).toBe('TX');
     // Unchanged keys are preserved.
-    expect(state.settings().testVersion).toBe('2008');
+    expect(state.settings().testVersion).toBe('2025');
   });
 
   it('re-fetches questions via CivicsApiService when the home state changes', () => {
@@ -52,7 +52,7 @@ describe('AppStateService', () => {
     state.updateSettings({ homeState: 'TX' });
     TestBed.flushEffects();          // run the reactive re-fetch effect
 
-    expect(getQuestionsSpy).toHaveBeenCalledWith('TX', '2008');
+    expect(getQuestionsSpy).toHaveBeenCalledWith('TX', '2025');
   });
 
   it('persists settings to localStorage', () => {
