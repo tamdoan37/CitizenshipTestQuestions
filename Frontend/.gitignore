@@ -7,6 +7,10 @@
 /tmp
 /out-tsc
 
+# Test output
+/coverage
+/.nyc_output
+
 # Environment / editor
 .DS_Store
 *.log

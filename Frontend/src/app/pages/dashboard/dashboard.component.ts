@@ -594,10 +594,11 @@ export class DashboardComponent implements OnInit {
 
   constructor() {
     // Refetch the daily question whenever the home state changes.
+    // allowSignalWrites: loadQotd sets qotd/revealAnswer signals asynchronously.
     effect(() => {
       const { homeState, testVersion } = this.state.settings();
       this.loadQotd(homeState, testVersion);
-    });
+    }, { allowSignalWrites: true });
   }
 
   ngOnInit(): void {

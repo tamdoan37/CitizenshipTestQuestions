@@ -107,11 +107,14 @@ export class AppStateService {
     // Persist trackers whenever they change
     effect(() => tryWrite(LS_TRACKERS, this.trackers()));
 
-    // Reload questions when homeState or testVersion changes
+    // Reload questions when homeState or testVersion changes.
+    // allowSignalWrites: the reload orchestrates async state (isLoadingCivics,
+    // questions, hydrated) in response to a settings change — an intentional
+    // signal-writing effect.
     effect(() => {
       const { homeState, testVersion } = this.settings();
       this.loadQuestions(homeState, testVersion);
-    });
+    }, { allowSignalWrites: true });
   }
 
   // ── Methods ────────────────────────────────────────────────────────────────
