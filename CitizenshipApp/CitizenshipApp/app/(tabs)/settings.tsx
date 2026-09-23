@@ -13,6 +13,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { useNotifications } from "@/hooks/useNotifications";
 
 const US_STATES: Array<[name: string, code: string]> = [
@@ -65,6 +66,7 @@ export default function SettingsScreen() {
   }
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.root}>
       <ScrollView contentContainerStyle={styles.container}>
         <Text style={styles.title}>Settings</Text>
@@ -203,6 +205,7 @@ export default function SettingsScreen() {
         </View>
       </ScrollView>
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
@@ -222,7 +225,7 @@ function SectionHeader({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#f8f9ff" },
+  root: { flex: 1, backgroundColor: "transparent" },
   container: { padding: 20, paddingBottom: 48 },
   title: { fontSize: 26, fontWeight: "800", color: "#1a1f36", marginBottom: 12 },
   sectionHeader: {

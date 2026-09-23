@@ -5,6 +5,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import type { QuizResult } from "@/types";
 import { CategoryBadge } from "./CategoryBadge";
+import { ScreenBackground } from "./ScreenBackground";
 
 interface Props {
   result: QuizResult;
@@ -18,6 +19,7 @@ export function QuizSummary({ result, onRetry, onHome }: Props) {
   const secs = Math.round((result.duration % 60000) / 1000);
 
   return (
+    <ScreenBackground>
     <ScrollView style={styles.root} contentContainerStyle={styles.container}>
       {/* Result banner */}
       <View style={[styles.banner, result.passed ? styles.passBanner : styles.failBanner]}>
@@ -90,11 +92,12 @@ export function QuizSummary({ result, onRetry, onHome }: Props) {
         </TouchableOpacity>
       </View>
     </ScrollView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#f8f9ff" },
+  root: { flex: 1, backgroundColor: "transparent" },
   container: { padding: 20, paddingBottom: 48 },
   banner: {
     borderRadius: 24,

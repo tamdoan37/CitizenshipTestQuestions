@@ -9,6 +9,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Flashcard } from "@/components/Flashcard";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { useApp } from "@/context/AppContext";
 import { CATEGORIES } from "@/data/questions";
 import type { Category } from "@/types";
@@ -44,6 +45,7 @@ export default function FlashcardsScreen() {
   }, [current, recordAnswer]);
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.root}>
       <View style={styles.header}>
         <Text style={styles.title}>Flashcards</Text>
@@ -147,11 +149,12 @@ export default function FlashcardsScreen() {
         </TouchableOpacity>
       </View>
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#f8f9ff" },
+  root: { flex: 1, backgroundColor: "transparent" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
