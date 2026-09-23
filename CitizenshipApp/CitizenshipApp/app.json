@@ -29,7 +29,8 @@
         {
           "color": "#3B5BDB"
         }
-      ]
+      ],
+      "./plugins/withIapFlavor"
     ],
     "experiments": {
       "typedRoutes": true
