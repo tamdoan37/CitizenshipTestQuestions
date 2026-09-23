@@ -15,8 +15,8 @@ import Animated, {
   Easing,
 } from "react-native-reanimated";
 import * as Speech from "expo-speech";
-import * as Haptics from "expo-haptics";
 import { Ionicons } from "@expo/vector-icons";
+import { haptics } from "@/services/haptics";
 import { CategoryBadge } from "./CategoryBadge";
 import type { Question } from "@/types";
 
@@ -44,7 +44,7 @@ export function Flashcard({ question, ttsRate = 0.9, onReveal }: Props) {
   }, [question.id]);
 
   const flip = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    haptics.impact();
     const goingToAnswer = !flipped.value;
     progress.value = withTiming(goingToAnswer ? 1 : 0, {
       duration: 480,
@@ -55,7 +55,7 @@ export function Flashcard({ question, ttsRate = 0.9, onReveal }: Props) {
   }, [onReveal]);
 
   const speak = useCallback(() => {
-    Haptics.selectionAsync();
+    haptics.selection();
     Speech.stop();
     Speech.speak(question.text, {
       language: "en-US",
