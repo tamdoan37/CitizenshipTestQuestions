@@ -1,5 +1,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { AppSettings, CivicsData, QuestionTracker } from "@/types";
+import type {
+  AppSettings,
+  CivicsData,
+  OfficialsOverride,
+  QuestionTracker,
+  QuizHistoryEntry,
+} from "@/types";
 import { QUESTIONS } from "@/data/questions";
 import { initialTracker } from "./srs";
 
@@ -11,10 +17,15 @@ const KEYS = {
   TRACKERS: "@citizenship/trackers",
   SETTINGS: "@citizenship/settings",
   CIVICS: "@citizenship/civics_data",
+  PREFERRED: "@citizenship/preferred_answers",
+  HISTORY: "@citizenship/quiz_history",
+  OVERRIDES: "@citizenship/officials_override",
 } as const;
 
 export const DEFAULT_SETTINGS: AppSettings = {
   homeState: "WI",
+  userName: "Future Citizen",
+  hasOnboarded: false,
   notificationsEnabled: false,
   notificationTime: "09:00",
   ttsRate: 0.9,
@@ -69,4 +80,46 @@ export async function loadCivicsData(): Promise<CivicsData | null> {
 
 export async function saveCivicsData(data: CivicsData): Promise<void> {
   await AsyncStorage.setItem(KEYS.CIVICS, JSON.stringify(data));
+}
+
+// ── Preferred answers ─────────────────────────────────────────────────
+export async function loadPreferredAnswers(): Promise<Record<number, string[]>> {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.PREFERRED);
+    return raw ? (JSON.parse(raw) as Record<number, string[]>) : {};
+  } catch {
+    return {};
+  }
+}
+
+export async function savePreferredAnswers(map: Record<number, string[]>): Promise<void> {
+  try { await AsyncStorage.setItem(KEYS.PREFERRED, JSON.stringify(map)); } catch { /* ignore */ }
+}
+
+// ── Quiz history ──────────────────────────────────────────────────────
+export async function loadQuizHistory(): Promise<QuizHistoryEntry[]> {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.HISTORY);
+    return raw ? (JSON.parse(raw) as QuizHistoryEntry[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function saveQuizHistory(list: QuizHistoryEntry[]): Promise<void> {
+  try { await AsyncStorage.setItem(KEYS.HISTORY, JSON.stringify(list)); } catch { /* ignore */ }
+}
+
+// ── Officials override ────────────────────────────────────────────────
+export async function loadOfficialsOverride(): Promise<OfficialsOverride> {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.OVERRIDES);
+    return raw ? (JSON.parse(raw) as OfficialsOverride) : {};
+  } catch {
+    return {};
+  }
+}
+
+export async function saveOfficialsOverride(o: OfficialsOverride): Promise<void> {
+  try { await AsyncStorage.setItem(KEYS.OVERRIDES, JSON.stringify(o)); } catch { /* ignore */ }
 }

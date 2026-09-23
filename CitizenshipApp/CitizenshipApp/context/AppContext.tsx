@@ -5,12 +5,16 @@ import React, {
   useEffect,
   useMemo,
   useReducer,
+  useRef,
 } from "react";
 import type {
   AppSettings,
   CivicsData,
+  OfficialsOverride,
   Question,
   QuestionTracker,
+  QuizHistoryEntry,
+  QuizResult,
 } from "@/types";
 import { fetchCivicsData } from "@/services/api";
 import {
@@ -18,12 +22,34 @@ import {
   applyAnswer,
   buildInitialTrackers,
   loadCivicsData,
+  loadOfficialsOverride,
+  loadPreferredAnswers,
+  loadQuizHistory,
   loadSettings,
   loadTrackers,
+  saveOfficialsOverride,
+  savePreferredAnswers,
+  saveQuizHistory,
   saveSettings,
   saveTrackers,
 } from "@/services/storage";
 import { QUESTIONS, patchDynamicAnswers } from "@/data/questions";
+
+/** Merge non-empty override fields over fetched/cached civics data. */
+function applyOverride(data: CivicsData, override: OfficialsOverride): CivicsData {
+  const merged = { ...data };
+  const FEDERAL = ["president", "vicePresident", "speakerOfHouse", "chiefJustice", "presidentParty"] as const;
+  for (const k of FEDERAL) {
+    const v = override[k];
+    if (typeof v === "string" && v.trim()) merged[k] = v.trim();
+  }
+  // Governor is state-specific: only apply it when it was entered for the
+  // state currently being shown, so it can't leak onto another state.
+  if (override.governor && override.governor.trim() && override.governorState === data.state) {
+    merged.governor = override.governor.trim();
+  }
+  return merged;
+}
 
 interface AppState {
   hydrated: boolean;
@@ -33,15 +59,23 @@ interface AppState {
   questions: Question[]; // patched with live official names
   isLoadingCivics: boolean;
   civicsError: string | null;
+  preferredAnswers: Record<number, string[]>;
+  quizHistory: QuizHistoryEntry[];
+  officialsOverride: OfficialsOverride;
 }
 
 type Action =
-  | { type: "HYDRATE"; settings: AppSettings; trackers: QuestionTracker[] }
+  | { type: "HYDRATE"; settings: AppSettings; trackers: QuestionTracker[];
+      preferredAnswers: Record<number, string[]>; quizHistory: QuizHistoryEntry[];
+      officialsOverride: OfficialsOverride }
   | { type: "SET_SETTINGS"; settings: AppSettings }
   | { type: "SET_TRACKERS"; trackers: QuestionTracker[] }
   | { type: "SET_CIVICS"; data: CivicsData; questions: Question[] }
   | { type: "SET_CIVICS_LOADING"; value: boolean }
-  | { type: "SET_CIVICS_ERROR"; error: string | null };
+  | { type: "SET_CIVICS_ERROR"; error: string | null }
+  | { type: "SET_PREFERRED"; preferredAnswers: Record<number, string[]> }
+  | { type: "SET_HISTORY"; quizHistory: QuizHistoryEntry[] }
+  | { type: "SET_OVERRIDE"; officialsOverride: OfficialsOverride };
 
 function reducer(state: AppState, action: Action): AppState {
   switch (action.type) {
@@ -51,6 +85,9 @@ function reducer(state: AppState, action: Action): AppState {
         hydrated: true,
         settings: action.settings,
         trackers: action.trackers,
+        preferredAnswers: action.preferredAnswers,
+        quizHistory: action.quizHistory,
+        officialsOverride: action.officialsOverride,
       };
     case "SET_SETTINGS":
       return { ...state, settings: action.settings };
@@ -68,6 +105,12 @@ function reducer(state: AppState, action: Action): AppState {
       return { ...state, isLoadingCivics: action.value };
     case "SET_CIVICS_ERROR":
       return { ...state, civicsError: action.error, isLoadingCivics: false };
+    case "SET_PREFERRED":
+      return { ...state, preferredAnswers: action.preferredAnswers };
+    case "SET_HISTORY":
+      return { ...state, quizHistory: action.quizHistory };
+    case "SET_OVERRIDE":
+      return { ...state, officialsOverride: action.officialsOverride };
     default:
       return state;
   }
@@ -81,6 +124,9 @@ const initialState: AppState = {
   questions: QUESTIONS,
   isLoadingCivics: false,
   civicsError: null,
+  preferredAnswers: {},
+  quizHistory: [],
+  officialsOverride: {},
 };
 
 interface AppContextValue extends AppState {
@@ -94,6 +140,13 @@ interface AppContextValue extends AppState {
   ) => Promise<void>;
   updateSettings: (patch: Partial<AppSettings>) => Promise<void>;
   refreshCivicsData: (force?: boolean) => Promise<void>;
+  /** Pin/unpin a preferred (easiest) answer for a question. */
+  togglePreferredAnswer: (questionId: number, answer: string) => Promise<void>;
+  /** Record a finished quiz into history. */
+  recordQuizResult: (result: QuizResult) => Promise<void>;
+  clearQuizHistory: () => Promise<void>;
+  /** Manually override official names; applied over fetched data immediately. */
+  updateOfficials: (patch: OfficialsOverride) => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -104,28 +157,42 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ── Hydrate persisted state on mount ────────────────────────────────
   useEffect(() => {
     (async () => {
-      const [settings, trackers, cachedCivics] = await Promise.all([
-        loadSettings(),
-        loadTrackers(),
-        loadCivicsData(),
-      ]);
-      dispatch({ type: "HYDRATE", settings, trackers });
+      const [settings, trackers, cachedCivics, preferredAnswers, quizHistory, officialsOverride] =
+        await Promise.all([
+          loadSettings(),
+          loadTrackers(),
+          loadCivicsData(),
+          loadPreferredAnswers(),
+          loadQuizHistory(),
+          loadOfficialsOverride(),
+        ]);
+      dispatch({ type: "HYDRATE", settings, trackers, preferredAnswers, quizHistory, officialsOverride });
       if (cachedCivics) {
+        const merged = applyOverride(cachedCivics, officialsOverride);
         dispatch({
           type: "SET_CIVICS",
-          data: cachedCivics,
-          questions: patchDynamicAnswers(QUESTIONS, cachedCivics),
+          data: merged,
+          questions: patchDynamicAnswers(QUESTIONS, merged),
         });
       }
     })();
   }, []);
+
+  // Read the override via a ref inside refreshCivicsData so that editing the
+  // override doesn't change the callback's identity (which would otherwise
+  // re-trigger the auto-fetch effect and flash the loading state).
+  const overrideRef = useRef(state.officialsOverride);
+  useEffect(() => {
+    overrideRef.current = state.officialsOverride;
+  }, [state.officialsOverride]);
 
   // ── Live civics data (President, Senators, Governor, …) ─────────────
   const refreshCivicsData = useCallback(
     async (force = false) => {
       dispatch({ type: "SET_CIVICS_LOADING", value: true });
       try {
-        const data = await fetchCivicsData(state.settings.homeState, force);
+        const fetched = await fetchCivicsData(state.settings.homeState, force);
+        const data = applyOverride(fetched, overrideRef.current);
         dispatch({
           type: "SET_CIVICS",
           data,
@@ -181,6 +248,62 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [state.settings]
   );
 
+  // ── Preferred answers ───────────────────────────────────────────────
+  const togglePreferredAnswer = useCallback(
+    async (questionId: number, answer: string) => {
+      const current = state.preferredAnswers[questionId] ?? [];
+      const nextArr = current.includes(answer)
+        ? current.filter((a) => a !== answer)
+        : [...current, answer];
+      const next = { ...state.preferredAnswers };
+      if (nextArr.length) next[questionId] = nextArr;
+      else delete next[questionId];
+      dispatch({ type: "SET_PREFERRED", preferredAnswers: next });
+      await savePreferredAnswers(next);
+    },
+    [state.preferredAnswers]
+  );
+
+  // ── Quiz history ────────────────────────────────────────────────────
+  const recordQuizResult = useCallback(
+    async (result: QuizResult) => {
+      const entry: QuizHistoryEntry = {
+        date: new Date().toISOString(),
+        score: result.score,
+        total: result.total,
+        passed: result.passed,
+        durationSeconds: Math.round(result.duration / 1000),
+      };
+      const next = [entry, ...state.quizHistory].slice(0, 100);
+      dispatch({ type: "SET_HISTORY", quizHistory: next });
+      await saveQuizHistory(next);
+    },
+    [state.quizHistory]
+  );
+
+  const clearQuizHistory = useCallback(async () => {
+    dispatch({ type: "SET_HISTORY", quizHistory: [] });
+    await saveQuizHistory([]);
+  }, []);
+
+  // ── Officials override ──────────────────────────────────────────────
+  const updateOfficials = useCallback(
+    async (patch: OfficialsOverride) => {
+      const next = { ...state.officialsOverride, ...patch };
+      dispatch({ type: "SET_OVERRIDE", officialsOverride: next });
+      await saveOfficialsOverride(next);
+      if (state.civicsData) {
+        const merged = applyOverride(state.civicsData, next);
+        dispatch({
+          type: "SET_CIVICS",
+          data: merged,
+          questions: patchDynamicAnswers(QUESTIONS, merged),
+        });
+      }
+    },
+    [state.officialsOverride, state.civicsData]
+  );
+
   // ── Derived: weight lookup for the quiz sampler ─────────────────────
   const weightById = useMemo(() => {
     const map: Record<number, number> = {};
@@ -196,6 +319,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       recordAnswers,
       updateSettings,
       refreshCivicsData,
+      togglePreferredAnswer,
+      recordQuizResult,
+      clearQuizHistory,
+      updateOfficials,
     }),
     [
       state,
@@ -204,6 +331,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       recordAnswers,
       updateSettings,
       refreshCivicsData,
+      togglePreferredAnswer,
+      recordQuizResult,
+      clearQuizHistory,
+      updateOfficials,
     ]
   );
 
