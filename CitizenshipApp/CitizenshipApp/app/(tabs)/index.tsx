@@ -22,6 +22,7 @@ export default function Dashboard() {
     questions,
     civicsData,
     settings,
+    quizHistory,
     isLoadingCivics,
     refreshCivicsData,
   } = useApp();
@@ -99,7 +100,7 @@ export default function Dashboard() {
             <View>
               <Text style={styles.greeting}>Good{timeOfDay()},</Text>
               <View style={styles.titleRow}>
-                <Text style={styles.title}>Future Citizen 🇺🇸</Text>
+                <Text style={styles.title}>{settings.userName} 🇺🇸</Text>
                 {isSupporter && (
                   <View style={styles.supporterStar}>
                     <Ionicons name="star" size={14} color="#f59e0b" />
@@ -227,6 +228,21 @@ export default function Dashboard() {
             <Text style={styles.actionLabel}>Take Quiz</Text>
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity
+          style={styles.historyBtn}
+          onPress={() => router.push("/history")}
+          activeOpacity={0.85}
+        >
+          <View style={styles.historyLeft}>
+            <Ionicons name="bar-chart" size={20} color="#4f46e5" />
+            <Text style={styles.historyText}>Quiz History</Text>
+          </View>
+          <View style={styles.historyRight}>
+            <Text style={styles.historyMeta}>{quizHistory.length} taken</Text>
+            <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+          </View>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
     </ScreenBackground>
@@ -447,8 +463,28 @@ const styles = StyleSheet.create({
     marginHorizontal: 20,
     gap: 12,
     marginTop: 12,
-    paddingBottom: 32,
+    paddingBottom: 12,
   },
+  historyBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: 20,
+    marginBottom: 32,
+    backgroundColor: "#fff",
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 2,
+  },
+  historyLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
+  historyText: { fontSize: 15, fontWeight: "700", color: "#1a1f36" },
+  historyRight: { flexDirection: "row", alignItems: "center", gap: 6 },
+  historyMeta: { fontSize: 13, color: "#94a3b8", fontWeight: "500" },
   action: {
     flex: 1,
     borderRadius: 20,

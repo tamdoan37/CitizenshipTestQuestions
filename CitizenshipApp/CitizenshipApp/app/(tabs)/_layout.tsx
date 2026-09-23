@@ -1,8 +1,15 @@
-import { Tabs } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import { Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useApp } from "@/context/AppContext";
 
 export default function TabLayout() {
+  const { hydrated, settings } = useApp();
+
+  // Wait for persisted state, then route first-time users to onboarding.
+  if (!hydrated) return null;
+  if (!settings.hasOnboarded) return <Redirect href="/welcome" />;
+
   return (
     <Tabs
       screenOptions={{

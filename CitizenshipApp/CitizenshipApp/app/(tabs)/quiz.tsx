@@ -50,7 +50,7 @@ function buildOptions(correct: string, pool: Question[]): string[] {
 }
 
 export default function QuizScreen() {
-  const { questions, recordAnswers, weightById } = useApp();
+  const { questions, recordAnswers, recordQuizResult, weightById } = useApp();
   const [phase, setPhase] = useState<Phase>("start");
   const [quizQuestions, setQuizQuestions] = useState<Question[]>([]);
   const [optionsMap, setOptionsMap] = useState<Record<number, string[]>>({});
@@ -120,6 +120,7 @@ export default function QuizScreen() {
       }))
     );
 
+    recordQuizResult(r);
     setResult(r);
     setPhase("result");
     haptics.notify(
@@ -127,7 +128,7 @@ export default function QuizScreen() {
         ? haptics.NotificationFeedbackType.Success
         : haptics.NotificationFeedbackType.Warning
     );
-  }, [quizQuestions, userAnswers, recordAnswers]);
+  }, [quizQuestions, userAnswers, recordAnswers, recordQuizResult]);
 
   const next = useCallback(() => {
     if (!selectedNow) {

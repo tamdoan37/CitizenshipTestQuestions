@@ -33,7 +33,33 @@ const US_STATES: Array<[name: string, code: string]> = [
 ];
 
 export default function SettingsScreen() {
-  const { settings, updateSettings } = useApp();
+  const { settings, updateSettings, civicsData, updateOfficials } = useApp();
+
+  // Officials updater fields (blank = keep current)
+  const [showOfficials, setShowOfficials] = useState(false);
+  const [officialsSaved, setOfficialsSaved] = useState(false);
+  const [presidentName, setPresidentName] = useState("");
+  const [vpName, setVpName] = useState("");
+  const [speakerName, setSpeakerName] = useState("");
+  const [chiefName, setChiefName] = useState("");
+  const [governorName, setGovernorName] = useState("");
+
+  async function saveOfficials() {
+    const patch: Record<string, string> = {};
+    if (presidentName.trim()) patch.president = presidentName.trim();
+    if (vpName.trim()) patch.vicePresident = vpName.trim();
+    if (speakerName.trim()) patch.speakerOfHouse = speakerName.trim();
+    if (chiefName.trim()) patch.chiefJustice = chiefName.trim();
+    if (governorName.trim()) {
+      patch.governor = governorName.trim();
+      patch.governorState = settings.homeState; // scope governor to this state
+    }
+    if (Object.keys(patch).length === 0) return;
+    await updateOfficials(patch);
+    setPresidentName(""); setVpName(""); setSpeakerName(""); setChiefName(""); setGovernorName("");
+    setOfficialsSaved(true);
+    setTimeout(() => setOfficialsSaved(false), 2500);
+  }
   const { scheduleDaily, cancelAll } = useNotifications();
   const [showStatePicker, setShowStatePicker] = useState(false);
   const [notifTime, setNotifTime] = useState(settings.notificationTime);
@@ -177,6 +203,44 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* ── Update Officials ───────────────────────────── */}
+        <SectionHeader icon="business" label="Update Officials" />
+        <View style={styles.card}>
+          {!showOfficials ? (
+            <TouchableOpacity onPress={() => setShowOfficials(true)}>
+              <Text style={styles.cardLabel}>🛠 Update officials data</Text>
+              <Text style={styles.cardSub}>
+                Change the President, VP, Speaker, Chief Justice, or your Governor after an election.
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={{ gap: 12 }}>
+              <OfficialField label="President" placeholder={civicsData?.president ?? "Name"}
+                value={presidentName} onChange={setPresidentName} />
+              <OfficialField label="Vice President" placeholder={civicsData?.vicePresident ?? "Name"}
+                value={vpName} onChange={setVpName} />
+              <OfficialField label="Speaker of the House" placeholder={civicsData?.speakerOfHouse ?? "Name"}
+                value={speakerName} onChange={setSpeakerName} />
+              <OfficialField label="Chief Justice" placeholder={civicsData?.chiefJustice ?? "Name"}
+                value={chiefName} onChange={setChiefName} />
+              <OfficialField label={`Governor (${settings.homeState})`} placeholder={civicsData?.governor ?? "Name"}
+                value={governorName} onChange={setGovernorName} />
+
+              {officialsSaved && <Text style={styles.savedMsg}>✓ Updated — answers refreshed.</Text>}
+
+              <View style={styles.officialsActions}>
+                <TouchableOpacity style={styles.officialsCancel} onPress={() => setShowOfficials(false)}>
+                  <Text style={styles.officialsCancelText}>Close</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.officialsSave} onPress={saveOfficials}>
+                  <Text style={styles.officialsSaveText}>Save</Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.cardSub}>Leave a field blank to keep its current value.</Text>
+            </View>
+          )}
+        </View>
+
         {/* ── Support ────────────────────────────────────── */}
         <SectionHeader icon="heart" label="Support" />
         <TouchableOpacity
@@ -224,10 +288,57 @@ function SectionHeader({
   );
 }
 
+function OfficialField({
+  label,
+  placeholder,
+  value,
+  onChange,
+}: {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <View>
+      <Text style={styles.cardSub}>{label}</Text>
+      <TextInput
+        value={value}
+        onChangeText={onChange}
+        placeholder={placeholder}
+        placeholderTextColor="#9ca3af"
+        style={styles.officialInput}
+        autoCapitalize="words"
+      />
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "transparent" },
   container: { padding: 20, paddingBottom: 48 },
   title: { fontSize: 26, fontWeight: "800", color: "#1a1f36", marginBottom: 12 },
+  officialInput: {
+    marginTop: 4,
+    borderWidth: 1.5,
+    borderColor: "#e2e8f0",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    fontSize: 15,
+    color: "#1a1f36",
+    backgroundColor: "#f8f9ff",
+  },
+  savedMsg: { fontSize: 13, fontWeight: "600", color: "#16a34a" },
+  officialsActions: { flexDirection: "row", gap: 10, marginTop: 4 },
+  officialsCancel: {
+    flex: 1, paddingVertical: 11, borderRadius: 10, backgroundColor: "#f1f5f9", alignItems: "center",
+  },
+  officialsCancelText: { fontSize: 14, fontWeight: "600", color: "#475569" },
+  officialsSave: {
+    flex: 1, paddingVertical: 11, borderRadius: 10, backgroundColor: "#4f46e5", alignItems: "center",
+  },
+  officialsSaveText: { fontSize: 14, fontWeight: "700", color: "#fff" },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",

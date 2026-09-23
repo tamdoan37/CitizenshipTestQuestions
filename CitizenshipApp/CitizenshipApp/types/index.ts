@@ -64,7 +64,30 @@ export interface QuizResult {
 
 export interface AppSettings {
   homeState: string;        // 2-letter code, default "WI"
+  userName: string;         // from onboarding, default "Future Citizen"
+  hasOnboarded: boolean;    // true once the welcome screen is completed
   notificationsEnabled: boolean;
   notificationTime: string; // "HH:MM"
   ttsRate: number;
 }
+
+/** A completed quiz, stored for the history view (newest first). */
+export interface QuizHistoryEntry {
+  date: string;            // ISO timestamp
+  score: number;
+  total: number;
+  passed: boolean;
+  durationSeconds: number;
+}
+
+/** User-supplied overrides for official names (applied over fetched data). */
+export type OfficialsOverride = Partial<
+  Pick<
+    CivicsData,
+    "president" | "vicePresident" | "speakerOfHouse" | "chiefJustice" | "governor" | "presidentParty"
+  >
+> & {
+  /** The state the governor override was entered for; governor only applies
+   *  when this matches the currently-fetched state's code. */
+  governorState?: string;
+};
