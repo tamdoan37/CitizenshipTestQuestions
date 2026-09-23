@@ -17,6 +17,7 @@ import Animated, {
   ZoomIn,
 } from "react-native-reanimated";
 import { TIP_TIERS, useTipJar, type TipTier } from "@/hooks/useTipJar";
+import { ScreenBackground } from "@/components/ScreenBackground";
 
 export default function TipJarScreen() {
   const {
@@ -36,6 +37,7 @@ export default function TipJarScreen() {
   }
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.root} edges={["top", "bottom"]}>
       {/* Close affordance */}
       <View style={styles.topBar}>
@@ -124,6 +126,7 @@ export default function TipJarScreen() {
         </Animated.View>
       )}
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
@@ -198,7 +201,7 @@ function platformSheetName(): string {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#f8f9ff" },
+  root: { flex: 1, backgroundColor: "transparent" },
   topBar: {
     flexDirection: "row",
     justifyContent: "space-between",

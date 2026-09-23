@@ -11,6 +11,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router, useFocusEffect } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { QUESTIONS, CATEGORIES } from "@/data/questions";
 import { loadSupporterFlag } from "@/services/supporter";
 import type { Category } from "@/types";
@@ -80,6 +81,7 @@ export default function Dashboard() {
   );
 
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.root}>
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -227,6 +229,7 @@ export default function Dashboard() {
         </View>
       </ScrollView>
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
@@ -286,7 +289,7 @@ function timeOfDay(): string {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#f8f9ff" },
+  root: { flex: 1, backgroundColor: "transparent" },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",

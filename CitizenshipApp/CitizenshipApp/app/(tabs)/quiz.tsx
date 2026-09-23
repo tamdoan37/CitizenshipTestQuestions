@@ -18,6 +18,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
 import { QuizSummary } from "@/components/QuizSummary";
 import { CategoryBadge } from "@/components/CategoryBadge";
+import { ScreenBackground } from "@/components/ScreenBackground";
 import { getWeightedQuestions } from "@/data/questions";
 import {
   isAnswerCorrect,
@@ -154,6 +155,7 @@ export default function QuizScreen() {
   // ── START SCREEN ──────────────────────────────────────────────────
   if (phase === "start") {
     return (
+      <ScreenBackground>
       <SafeAreaView style={styles.root}>
         <View style={styles.startContainer}>
           <View style={styles.startIcon}>
@@ -189,6 +191,7 @@ export default function QuizScreen() {
           </TouchableOpacity>
         </View>
       </SafeAreaView>
+      </ScreenBackground>
     );
   }
 
@@ -207,6 +210,7 @@ export default function QuizScreen() {
 
   // ── QUESTION SCREEN ───────────────────────────────────────────────
   return (
+    <ScreenBackground>
     <SafeAreaView style={styles.root}>
       <View style={styles.topBar}>
         <TouchableOpacity onPress={() => setPhase("start")} hitSlop={12}>
@@ -295,11 +299,12 @@ export default function QuizScreen() {
         </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
+    </ScreenBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#f8f9ff" },
+  root: { flex: 1, backgroundColor: "transparent" },
   startContainer: {
     flex: 1,
     padding: 28,
