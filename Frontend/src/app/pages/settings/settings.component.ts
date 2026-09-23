@@ -2,8 +2,9 @@ import { Component, inject, signal, computed, OnInit, ChangeDetectionStrategy } 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { forkJoin, type Observable } from 'rxjs';
 import { AppStateService } from '../../services/app-state.service';
-import { CivicsApiService, StateOfficial } from '../../services/civics-api.service';
+import { CivicsApiService, StateOfficial, FederalOfficial } from '../../services/civics-api.service';
 
 const TTS_RATES = [
   { label: '0.7× Slow',   value: 0.7 },
@@ -168,6 +169,33 @@ const TTS_RATES = [
     }
     .reset-btn:hover { background: #fecaca; }
 
+    /* ── Admin officials ─────────────────────────── */
+    .admin-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; }
+    .admin-field-label { font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 4px; }
+    .admin-input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 8px;
+      border: 1.5px solid #e2e6f3;
+      background: #f8f9ff;
+      color: #1e1b4b;
+      font-size: 14px;
+      outline: none;
+      max-width: none;
+    }
+    .admin-input:focus { border-color: #4f46e5; }
+    .admin-status { font-size: 13px; font-weight: 600; color: #16a34a; }
+    .admin-status.err { color: #ef4444; }
+    .admin-actions { display: flex; gap: 10px; }
+    .admin-btn { flex: 1; padding: 11px; border-radius: 8px; border: none; font-size: 14px; font-weight: 600; cursor: pointer; }
+    .admin-save {
+      flex: 1; padding: 11px; border-radius: 8px; border: none;
+      background: #4f46e5; color: #fff; font-size: 14px; font-weight: 700; cursor: pointer;
+    }
+    .admin-save:hover:not(:disabled) { background: #6366f1; }
+    .admin-save:disabled { opacity: 0.6; cursor: default; }
+    .admin-hint { font-size: 11px; color: #9ca3af; }
+
     .confirm-row {
       display: flex;
       gap: 10px;
@@ -296,6 +324,55 @@ const TTS_RATES = [
         </div>
       </div>
 
+      <!-- ── Admin: Officials updater ── -->
+      <div class="section">
+        <div class="section-header"><h2>Update Officials (Admin)</h2></div>
+        @if (!showAdmin()) {
+          <button class="setting-row" style="width:100%;background:none;border:none;text-align:left;cursor:pointer;" (click)="showAdmin.set(true)">
+            <div>
+              <div class="setting-label">🛠 Update officials data</div>
+              <div class="setting-desc">Change President, VP, Speaker, or Chief Justice after an election</div>
+            </div>
+            <span style="font-size:18px;color:#9ca3af;">›</span>
+          </button>
+        } @else {
+          <div class="admin-body">
+            <div>
+              <div class="admin-field-label">Admin key</div>
+              <input class="admin-input" type="password" [(ngModel)]="adminKey" name="adminKey" placeholder="X-Admin-Key" />
+            </div>
+            <div class="admin-field">
+              <div class="admin-field-label">President</div>
+              <input class="admin-input" [(ngModel)]="presidentName" name="presName" placeholder="Full name" />
+            </div>
+            <div class="admin-field">
+              <div class="admin-field-label">Vice President</div>
+              <input class="admin-input" [(ngModel)]="vpName" name="vpName" placeholder="Full name" />
+            </div>
+            <div class="admin-field">
+              <div class="admin-field-label">Speaker of the House</div>
+              <input class="admin-input" [(ngModel)]="speakerName" name="speakerName" placeholder="Full name" />
+            </div>
+            <div class="admin-field">
+              <div class="admin-field-label">Chief Justice</div>
+              <input class="admin-input" [(ngModel)]="chiefName" name="chiefName" placeholder="Full name" />
+            </div>
+
+            @if (adminStatus()) {
+              <div class="admin-status" [class.err]="adminError()">{{ adminStatus() }}</div>
+            }
+
+            <div class="admin-actions">
+              <button class="btn-cancel admin-btn" (click)="closeAdmin()">Close</button>
+              <button class="admin-save" [disabled]="adminSaving()" (click)="saveOfficials()">
+                {{ adminSaving() ? 'Saving…' : 'Save & Refresh' }}
+              </button>
+            </div>
+            <p class="admin-hint">Leave a field blank to keep its current value. Only fill in what changed.</p>
+          </div>
+        }
+      </div>
+
       <!-- ── Support ── -->
       <div class="section">
         <div class="section-header"><h2>Support this app</h2></div>
@@ -336,6 +413,17 @@ export class SettingsComponent implements OnInit {
   allStates    = signal<StateOfficial[]>([]);
   isPlaying    = signal(false);
   confirmReset = signal(false);
+
+  // ── Admin officials updater ──
+  showAdmin    = signal(false);
+  adminSaving  = signal(false);
+  adminStatus  = signal('');
+  adminError   = signal(false);
+  adminKey      = '';
+  presidentName = '';
+  vpName        = '';
+  speakerName   = '';
+  chiefName     = '';
 
   selectedState = computed(() => {
     const code = this.state.settings().homeState;
@@ -390,5 +478,57 @@ export class SettingsComponent implements OnInit {
 
   goSupport(): void {
     this.router.navigate(['/support']);
+  }
+
+  closeAdmin(): void {
+    this.showAdmin.set(false);
+    this.adminStatus.set('');
+  }
+
+  /** PUT each entered federal official, then refresh patched answers. */
+  saveOfficials(): void {
+    const key = this.adminKey.trim();
+    if (!key) {
+      this.adminError.set(true);
+      this.adminStatus.set('Enter the admin key first.');
+      return;
+    }
+
+    const jobs: Observable<FederalOfficial>[] = [];
+    const queue = (title: string, name: string) => {
+      const n = name.trim();
+      if (n) jobs.push(this.api.updateFederalOfficialByTitle(title, { name: n }, key));
+    };
+    queue('President', this.presidentName);
+    queue('VicePresident', this.vpName);
+    queue('SpeakerOfHouse', this.speakerName);
+    queue('ChiefJustice', this.chiefName);
+
+    if (jobs.length === 0) {
+      this.adminError.set(true);
+      this.adminStatus.set('Enter at least one name to update.');
+      return;
+    }
+
+    this.adminSaving.set(true);
+    this.adminStatus.set('');
+    forkJoin(jobs).subscribe({
+      next: () => {
+        this.state.refreshCivicsData();
+        this.adminSaving.set(false);
+        this.adminError.set(false);
+        this.adminStatus.set('Updated! Answers refreshed.');
+        this.presidentName = this.vpName = this.speakerName = this.chiefName = '';
+      },
+      error: (err) => {
+        this.adminSaving.set(false);
+        this.adminError.set(true);
+        this.adminStatus.set(
+          err?.status === 401
+            ? 'Invalid admin key.'
+            : 'Update failed — is the backend running?'
+        );
+      },
+    });
   }
 }

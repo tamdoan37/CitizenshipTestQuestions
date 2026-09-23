@@ -1,6 +1,7 @@
 import { Injectable, computed, effect, inject, signal } from '@angular/core';
 import { CivicsApiService, Question } from './civics-api.service';
 import { QuestionTracker, SrsService, MASTERY_STREAK, BASE_WEIGHT } from './srs.service';
+import { QuizResult } from './scoring.service';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -10,8 +11,23 @@ export interface AppSettings {
   ttsRate:     number;
 }
 
-const LS_SETTINGS = 'cf-settings';
-const LS_TRACKERS = 'cf-trackers';
+/** A completed quiz, stored for the history view. */
+export interface QuizHistoryEntry {
+  date:            string; // ISO timestamp
+  correctCount:    number;
+  totalQuestions:  number;
+  scorePercent:    number;
+  isPassed:        boolean;
+  durationSeconds: number;
+}
+
+const DEFAULT_USER_NAME = 'Future Citizen';
+
+const LS_SETTINGS  = 'cf-settings';
+const LS_TRACKERS  = 'cf-trackers';
+const LS_USERNAME  = 'cf-username';
+const LS_PREFERRED = 'cf-preferred-answers';
+const LS_HISTORY   = 'cf-quiz-history';
 
 function tryParse<T>(key: string): T | null {
   try {
@@ -22,6 +38,10 @@ function tryParse<T>(key: string): T | null {
 
 function tryWrite(key: string, value: unknown): void {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* ignore */ }
+}
+
+function hasStoredName(): boolean {
+  try { return !!localStorage.getItem(LS_USERNAME); } catch { return false; }
 }
 
 // ── Service ───────────────────────────────────────────────────────────────────
@@ -49,6 +69,27 @@ export class AppStateService {
   );
 
   questions = signal<Question[]>([]);
+
+  /** Personalization: the user's first name (from onboarding). */
+  userName = signal<string>(
+    (() => {
+      try { return localStorage.getItem(LS_USERNAME) || DEFAULT_USER_NAME; }
+      catch { return DEFAULT_USER_NAME; }
+    })()
+  );
+
+  /** Per-question pinned "easiest" answers: questionId → chosen answers. */
+  preferredAnswers = signal<Record<string, string[]>>(
+    tryParse<Record<string, string[]>>(LS_PREFERRED) ?? {}
+  );
+
+  /** Completed quizzes, newest first. */
+  quizHistory = signal<QuizHistoryEntry[]>(
+    tryParse<QuizHistoryEntry[]>(LS_HISTORY) ?? []
+  );
+
+  /** True once the user has completed onboarding (name saved). */
+  onboarded = signal<boolean>(hasStoredName());
 
   // ── Computed ───────────────────────────────────────────────────────────────
 
@@ -107,6 +148,10 @@ export class AppStateService {
     // Persist trackers whenever they change
     effect(() => tryWrite(LS_TRACKERS, this.trackers()));
 
+    // Persist preferred answers and quiz history
+    effect(() => tryWrite(LS_PREFERRED, this.preferredAnswers()));
+    effect(() => tryWrite(LS_HISTORY, this.quizHistory()));
+
     // Reload questions when homeState or testVersion changes.
     // allowSignalWrites: the reload orchestrates async state (isLoadingCivics,
     // questions, hydrated) in response to a settings change — an intentional
@@ -133,6 +178,12 @@ export class AppStateService {
 
   updateSettings(patch: Partial<AppSettings>): void {
     this.settings.update(s => ({ ...s, ...patch }));
+  }
+
+  /** Re-fetch questions so freshly-updated official names are patched in. */
+  refreshCivicsData(): void {
+    const { homeState, testVersion } = this.settings();
+    this.loadQuestions(homeState, testVersion);
   }
 
   /** Record an answer for a question and update SRS weight. */
@@ -168,5 +219,57 @@ export class AppStateService {
   /** Reset all SRS trackers (start fresh). */
   resetProgress(): void {
     this.trackers.set({});
+  }
+
+  // ── Onboarding / personalization ─────────────────────────────────────────────
+
+  setUserName(name: string): void {
+    const clean = name.trim() || DEFAULT_USER_NAME;
+    this.userName.set(clean);
+    try { localStorage.setItem(LS_USERNAME, clean); } catch { /* ignore */ }
+    this.onboarded.set(true);
+  }
+
+  // ── Preferred answers ────────────────────────────────────────────────────────
+
+  getPreferred(questionId: string): string[] {
+    return this.preferredAnswers()[questionId] ?? [];
+  }
+
+  isPreferred(questionId: string, answer: string): boolean {
+    return this.getPreferred(questionId).includes(answer);
+  }
+
+  /** Pin/unpin one answer as a user's preferred (easiest) answer. */
+  togglePreferredAnswer(questionId: string, answer: string): void {
+    this.preferredAnswers.update(map => {
+      const current = map[questionId] ?? [];
+      const next = current.includes(answer)
+        ? current.filter(a => a !== answer)
+        : [...current, answer];
+      const updated = { ...map };
+      if (next.length > 0) updated[questionId] = next;
+      else delete updated[questionId];
+      return updated;
+    });
+  }
+
+  // ── Quiz history ─────────────────────────────────────────────────────────────
+
+  /** Record a finished quiz into the history (newest first). */
+  addQuizResult(result: QuizResult): void {
+    const entry: QuizHistoryEntry = {
+      date:            new Date().toISOString(),
+      correctCount:    result.correctCount,
+      totalQuestions:  result.totalQuestions,
+      scorePercent:    result.scorePercent,
+      isPassed:        result.isPassed,
+      durationSeconds: result.duration,
+    };
+    this.quizHistory.update(list => [entry, ...list].slice(0, 100));
+  }
+
+  clearQuizHistory(): void {
+    this.quizHistory.set([]);
   }
 }

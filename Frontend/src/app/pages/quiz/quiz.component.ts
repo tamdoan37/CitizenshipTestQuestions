@@ -519,6 +519,7 @@ export class QuizComponent implements OnInit, OnDestroy {
     );
 
     this.state.recordAnswers(result.answersById);
+    this.state.addQuizResult(result);
     this.quizResult.set(result);
     this.phase.set('result');
   }

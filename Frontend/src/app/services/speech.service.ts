@@ -3,8 +3,17 @@ import { AppStateService } from './app-state.service';
 
 /**
  * Centralized Web Speech API wrapper.
+ *
+ * Handles the two classic browser TTS pitfalls:
+ *  1. Voice list loads asynchronously — Chrome returns [] from getVoices()
+ *     until the `voiceschanged` event fires. We cache voices and listen for it.
+ *  2. Stuck queues — always cancel() before a new utterance.
+ *
  * A single active utterance is tracked so any component can reflect
  * "who is speaking" via `currentSpeakingId`.
+ *
+ * NOTE: speak()/toggle() must be called directly from a user (click) handler —
+ * browsers block speech synthesis that isn't tied to a user gesture.
  */
 @Injectable({ providedIn: 'root' })
 export class SpeechService {
@@ -16,12 +25,39 @@ export class SpeechService {
   readonly isPlaying = signal<boolean>(false);
   readonly currentSpeakingId = signal<number | string | null>(null);
 
-  /** Guards against the async `cancel()` → `speak()` race in Chromium. */
+  private voices: SpeechSynthesisVoice[] = [];
   private settleTimer: ReturnType<typeof setTimeout> | null = null;
 
+  constructor() {
+    if (this.isSupported()) {
+      this.loadVoices();
+      // Chrome populates voices asynchronously; refresh when it signals.
+      try {
+        window.speechSynthesis.addEventListener('voiceschanged', () => this.loadVoices());
+      } catch { /* older browsers: getVoices() is already synchronous */ }
+    }
+  }
+
+  private loadVoices(): void {
+    try {
+      const list = window.speechSynthesis.getVoices();
+      if (list && list.length) this.voices = list;
+    } catch { /* ignore */ }
+  }
+
+  /** Pick a natural en-US voice, preferring Google's where available. */
+  private pickVoice(): SpeechSynthesisVoice | undefined {
+    if (!this.voices.length) this.loadVoices();
+    return (
+      this.voices.find(v => v.lang === 'en-US' && /google/i.test(v.name)) ??
+      this.voices.find(v => v.lang === 'en-US') ??
+      this.voices.find(v => v.lang?.startsWith('en'))
+    );
+  }
+
   /**
-   * Speak `text`, tagging the utterance with `id` so the UI can highlight
-   * the originating control. Cancels any in-flight speech first.
+   * Speak `text`, tagging the utterance with `id` so the UI can highlight the
+   * originating control. Cancels any in-flight speech first.
    */
   speak(id: number | string, text: string, rate?: number): void {
     if (!this.isSupported() || !text?.trim()) return;
@@ -37,6 +73,9 @@ export class SpeechService {
       utt.lang = 'en-US';
       utt.rate = Math.min(Math.max(effectiveRate, 0.5), 2.0);
       utt.pitch = 1.0;
+
+      const voice = this.pickVoice();
+      if (voice) utt.voice = voice;
 
       utt.onstart = () => {
         this.isPlaying.set(true);
@@ -64,9 +103,7 @@ export class SpeechService {
     this.currentSpeakingId.set(null);
   }
 
-  /**
-   * If the given `id` is currently speaking, stop. Otherwise start speaking it.
-   */
+  /** If `id` is currently speaking, stop; otherwise start speaking it. */
   toggle(id: number | string, text: string, rate?: number): void {
     if (this.currentSpeakingId() === id && this.isPlaying()) {
       this.stop();

@@ -123,11 +123,12 @@ import { SpeakerButtonComponent } from '../speaker-button/speaker-button.compone
       padding: 6px 0;
       border-bottom: 1px solid rgba(255,255,255,0.08);
       display: flex;
-      align-items: baseline;
+      align-items: center;
       gap: 8px;
     }
 
     .answer-item:last-child { border-bottom: none; }
+    .answer-item.dim { color: #c7d2fe; opacity: 0.8; }
 
     .answer-item::before {
       content: '·';
@@ -135,6 +136,37 @@ import { SpeakerButtonComponent } from '../speaker-button/speaker-button.compone
       font-weight: 900;
       flex-shrink: 0;
     }
+
+    .ans-text { flex: 1; }
+
+    .pin {
+      flex-shrink: 0;
+      border: none;
+      background: rgba(255,255,255,0.10);
+      border-radius: 8px;
+      padding: 4px 7px;
+      font-size: 13px;
+      cursor: pointer;
+      line-height: 1;
+      opacity: 0.6;
+      transition: opacity 0.15s, background 0.15s, transform 0.1s;
+    }
+    .pin:hover { opacity: 1; background: rgba(255,255,255,0.18); }
+    .pin:active { transform: scale(0.9); }
+    .pin.pinned { opacity: 1; background: rgba(251,191,36,0.22); }
+
+    .show-all {
+      align-self: flex-start;
+      margin: 6px 0 2px;
+      border: none;
+      background: none;
+      color: #a5b4fc;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 2px 0;
+    }
+    .show-all:hover { color: #c7d2fe; }
 
     .back-flip-hint {
       margin-top: 12px;
@@ -257,14 +289,48 @@ import { SpeakerButtonComponent } from '../speaker-button/speaker-button.compone
           <div class="card-face card-back">
             <div class="back-header">
               <span [class]="catBadgeClass()">{{ question.category }}</span>
-              <span class="back-label">Acceptable Answers</span>
+              <span class="back-label">{{ hasPreferred() ? 'Your Selected Answers' : 'Acceptable Answers' }}</span>
             </div>
-            <ul class="answers-list">
-              @for (ans of question.fixedAnswers; track ans) {
-                <li class="answer-item">{{ ans }}</li>
+
+            @if (hasPreferred()) {
+              <!-- Pinned (easiest) answers first -->
+              <ul class="answers-list">
+                @for (ans of preferredList(); track ans) {
+                  <li class="answer-item">
+                    <span class="ans-text">{{ ans }}</span>
+                    <button class="pin pinned" (click)="togglePin(ans); $event.stopPropagation()"
+                      aria-label="Unpin answer" title="Unpin">📌</button>
+                  </li>
+                }
+              </ul>
+              @if (otherList().length > 0) {
+                <button class="show-all" (click)="toggleShowAll(); $event.stopPropagation()">
+                  {{ showAll() ? '▲ Hide extra answers' : '▼ Show All Acceptable Answers (' + otherList().length + ')' }}
+                </button>
+                @if (showAll()) {
+                  <ul class="answers-list">
+                    @for (ans of otherList(); track ans) {
+                      <li class="answer-item dim">
+                        <span class="ans-text">{{ ans }}</span>
+                        <button class="pin" (click)="togglePin(ans); $event.stopPropagation()"
+                          aria-label="Pin answer" title="Pin as easiest">📍</button>
+                      </li>
+                    }
+                  </ul>
+                }
               }
-            </ul>
-            <p class="back-flip-hint">Tap card to return to question</p>
+            } @else {
+              <ul class="answers-list">
+                @for (ans of question.fixedAnswers; track ans) {
+                  <li class="answer-item">
+                    <span class="ans-text">{{ ans }}</span>
+                    <button class="pin" (click)="togglePin(ans); $event.stopPropagation()"
+                      aria-label="Pin answer" title="Pin as easiest">📍</button>
+                  </li>
+                }
+              </ul>
+            }
+            <p class="back-flip-hint">Tap card to return · 📍 pin your easiest answers</p>
           </div>
         </div>
       </div>
@@ -316,9 +382,35 @@ export class FlashcardComponent {
   private speech = inject(SpeechService);
 
   isFlipped  = signal(false);
+  showAll    = signal(false);
 
   isStarred  = computed(() => this.starredIds.has(this.question?.questionId ?? ''));
   isMastered = computed(() => this.state.isMastered(this.question?.questionId ?? ''));
+
+  // Preferred-answer helpers (plain getters so they re-read the current
+  // question input and the preferredAnswers signal on every change detection).
+  hasPreferred(): boolean {
+    return this.preferredList().length > 0;
+  }
+
+  preferredList(): string[] {
+    const pinned = this.state.getPreferred(this.question?.questionId ?? '');
+    // Keep only pinned answers that still exist in this question's answer set.
+    return (this.question?.fixedAnswers ?? []).filter(a => pinned.includes(a));
+  }
+
+  otherList(): string[] {
+    const pinned = this.state.getPreferred(this.question?.questionId ?? '');
+    return (this.question?.fixedAnswers ?? []).filter(a => !pinned.includes(a));
+  }
+
+  togglePin(answer: string): void {
+    if (this.question) this.state.togglePreferredAnswer(this.question.questionId, answer);
+  }
+
+  toggleShowAll(): void {
+    this.showAll.update(v => !v);
+  }
 
   /** Text for the currently visible face. */
   visibleText = computed(() =>
@@ -351,6 +443,7 @@ export class FlashcardComponent {
   /** Reset flip state when navigating to a new card. */
   ngOnChanges(): void {
     this.isFlipped.set(false);
+    this.showAll.set(false);
     this.speech.stop();
   }
 }
