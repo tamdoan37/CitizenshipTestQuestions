@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
+    <!-- Allow running on a newer major runtime (e.g. .NET 10) when the .NET 8
+         runtime isn't installed locally. Hosting platforms are unaffected. -->
+    <RollForward>Major</RollForward>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <RootNamespace>CitizenFlowApi</RootNamespace>
