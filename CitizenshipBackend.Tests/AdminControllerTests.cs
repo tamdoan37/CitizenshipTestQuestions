@@ -69,6 +69,34 @@ public class AdminControllerTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
+    public async Task UpdateFederalOfficialByTitle_PersistsNewName()
+    {
+        var client = AuthedClient();
+
+        var updated = new FederalOfficialDto(0, "President", "Jane Q. Public", "");
+        var putResponse = await client.PutAsJsonAsync(
+            "/api/admin/officials/federal/title/President", updated);
+        putResponse.EnsureSuccessStatusCode();
+
+        var after = await client.GetFromJsonAsync<List<FederalOfficialDto>>(
+            "/api/admin/officials/federal", JsonOpts);
+        var president = after!.Single(o => o.Title == "President");
+
+        Assert.Equal("Jane Q. Public", president.Name);
+        // Party left blank in the request must be preserved, not wiped.
+        Assert.False(string.IsNullOrEmpty(president.Party));
+    }
+
+    [Fact]
+    public async Task UpdateFederalOfficialByTitle_UnknownTitle_ReturnsNotFound()
+    {
+        var client = AuthedClient();
+        var body = new FederalOfficialDto(0, "Emperor", "Nobody", "None");
+        var response = await client.PutAsJsonAsync("/api/admin/officials/federal/title/Emperor", body);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
     public async Task UpdateFederalOfficial_UnknownId_ReturnsNotFound()
     {
         var client = AuthedClient();

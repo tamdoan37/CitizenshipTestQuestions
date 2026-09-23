@@ -178,6 +178,13 @@ export class CivicsApiService {
     });
   }
 
+  /** Update a federal official by role name (President, VicePresident, …). */
+  updateFederalOfficialByTitle(title: string, dto: Partial<FederalOfficial>, adminKey: string): Observable<FederalOfficial> {
+    return this.http.put<FederalOfficial>(`${this.baseUrl}/api/admin/officials/federal/title/${title}`, dto, {
+      headers: { 'X-Admin-Key': adminKey }
+    });
+  }
+
   updateStateOfficial(stateCode: string, dto: Partial<StateOfficial>, adminKey: string): Observable<StateOfficial> {
     return this.http.put<StateOfficial>(`${this.baseUrl}/api/admin/officials/state/${stateCode}`, dto, {
       headers: { 'X-Admin-Key': adminKey }

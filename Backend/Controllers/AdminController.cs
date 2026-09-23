@@ -36,6 +36,23 @@ public class AdminController(AppDbContext db, IConfiguration config) : Controlle
         return Ok(official);
     }
 
+    // PUT /api/admin/officials/federal/title/{title}
+    // Update by role name (President, VicePresident, SpeakerOfHouse, ChiefJustice)
+    // so the client doesn't need to know the numeric id.
+    [HttpPut("officials/federal/title/{title}")]
+    public async Task<IActionResult> UpdateFederalOfficialByTitle(string title, [FromBody] FederalOfficial dto)
+    {
+        if (!IsAuthorized()) return Unauthorized(new { message = "Invalid or missing X-Admin-Key header." });
+
+        var official = await db.FederalOfficials.FirstOrDefaultAsync(f => f.Title == title);
+        if (official is null) return NotFound(new { message = $"Federal official '{title}' not found." });
+
+        if (!string.IsNullOrWhiteSpace(dto.Name))  official.Name  = dto.Name;
+        if (!string.IsNullOrWhiteSpace(dto.Party)) official.Party = dto.Party;
+        await db.SaveChangesAsync();
+        return Ok(official);
+    }
+
     // POST /api/admin/officials/federal
     [HttpPost("officials/federal")]
     public async Task<IActionResult> CreateFederalOfficial([FromBody] FederalOfficial dto)

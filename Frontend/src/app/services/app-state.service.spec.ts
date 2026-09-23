@@ -88,4 +88,40 @@ describe('AppStateService', () => {
     state.resetProgress();
     expect(Object.keys(state.trackers()).length).toBe(0);
   });
+
+  it('sets the user name and marks onboarding complete', () => {
+    const state = TestBed.inject(AppStateService);
+    expect(state.userName()).toBe('Future Citizen');
+    state.setUserName('  Maria  ');
+    expect(state.userName()).toBe('Maria');
+    expect(state.onboarded()).toBe(true);
+    expect(localStorage.getItem('cf-username')).toBe('Maria');
+  });
+
+  it('toggles preferred answers per question', () => {
+    const state = TestBed.inject(AppStateService);
+    state.togglePreferredAnswer('Q001', 'the Constitution');
+    expect(state.isPreferred('Q001', 'the Constitution')).toBe(true);
+    expect(state.getPreferred('Q001')).toEqual(['the Constitution']);
+    state.togglePreferredAnswer('Q001', 'the Constitution');
+    expect(state.isPreferred('Q001', 'the Constitution')).toBe(false);
+    expect(state.getPreferred('Q001')).toEqual([]);
+  });
+
+  it('records quiz results into history, newest first', () => {
+    const state = TestBed.inject(AppStateService);
+    state.addQuizResult({
+      totalQuestions: 20, correctCount: 12, isPassed: true,
+      scorePercent: 60, duration: 300, answersById: {},
+    });
+    state.addQuizResult({
+      totalQuestions: 20, correctCount: 8, isPassed: false,
+      scorePercent: 40, duration: 250, answersById: {},
+    });
+    const history = state.quizHistory();
+    expect(history.length).toBe(2);
+    expect(history[0].correctCount).toBe(8); // newest first
+    expect(history[1].isPassed).toBe(true);
+    expect(history[0].date).toBeTruthy();
+  });
 });

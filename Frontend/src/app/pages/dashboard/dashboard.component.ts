@@ -422,6 +422,25 @@ import { SpeakerButtonComponent } from '../../components/speaker-button/speaker-
     .action-quiz { background: #16a34a; color: #fff; }
     .action-quiz:hover { background: #15803d; }
 
+    /* ── History button ───────────────────────────── */
+    .history-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 12px;
+      padding: 14px 16px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      color: #1e1b4b;
+    }
+    .history-btn:hover { background: #f8f9ff; }
+    .history-meta { font-size: 13px; color: #9ca3af; font-weight: 500; display: flex; align-items: center; gap: 6px; }
+    .history-meta .chevron { font-size: 18px; }
+
     /* ── Loading state ────────────────────────────── */
     .loading-row {
       display: flex;
@@ -602,6 +621,15 @@ import { SpeakerButtonComponent } from '../../components/speaker-button/speaker-
             Take Quiz
           </a>
         </div>
+
+        <!-- Quiz History -->
+        <a routerLink="/history" class="history-btn">
+          <span>📊 Quiz History</span>
+          <span class="history-meta">
+            {{ state.quizHistory().length }} taken
+            <span class="chevron">›</span>
+          </span>
+        </a>
       }
     </div>
   `,
@@ -617,9 +645,9 @@ export class DashboardComponent implements OnInit {
 
   greeting = computed(() => {
     const h = new Date().getHours();
-    if (h < 12) return 'Good morning 👋';
-    if (h < 17) return 'Good afternoon 👋';
-    return 'Good evening 👋';
+    const name = this.state.userName();
+    const part = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+    return `${part}, ${name} 👋`;
   });
 
   constructor() {

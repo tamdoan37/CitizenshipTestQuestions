@@ -1,6 +1,8 @@
-import { Component } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
 import { CommonModule } from '@angular/common';
+import { filter, map, startWith } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -74,6 +76,7 @@ import { CommonModule } from '@angular/common';
       <router-outlet />
     </div>
 
+    @if (showNav()) {
     <nav class="bottom-nav">
       <a class="nav-item"
          routerLink="/"
@@ -101,6 +104,24 @@ import { CommonModule } from '@angular/common';
         Settings
       </a>
     </nav>
+    }
   `,
 })
-export class AppComponent {}
+export class AppComponent {
+  private router = inject(Router);
+
+  /** Hide the bottom nav on full-screen routes (welcome, support modal). */
+  private currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map(e => e.urlAfterRedirects),
+      startWith(this.router.url),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  showNav = () => {
+    const url = this.currentUrl().split('?')[0];
+    return url !== '/welcome' && url !== '/support';
+  };
+}
