@@ -20,7 +20,7 @@ export function ScreenBackground({
     <ImageBackground
       source={require("../assets/liberty-bg.png")}
       resizeMode="cover"
-      blurRadius={18}
+      blurRadius={6}
       style={[styles.fill, style]}
     >
       {/* Readability veil — keeps content crisp over the blurred photo. */}
@@ -31,9 +31,12 @@ export function ScreenBackground({
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1, backgroundColor: "#e7ecfb" },
+  // Deep navy base so the image reads even before it decodes / on letterbox edges.
+  fill: { flex: 1, backgroundColor: "#1e1b4b" },
   veil: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(244,246,252,0.84)",
+    // Lower opacity = more visible image; raise it toward 0.6 if text over the
+    // backdrop (e.g. the dashboard greeting) gets hard to read.
+    backgroundColor: "rgba(244,246,252,0.4)",
   },
 });
