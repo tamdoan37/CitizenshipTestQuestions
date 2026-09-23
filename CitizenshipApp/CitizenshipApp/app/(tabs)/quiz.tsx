@@ -13,7 +13,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from "react-native-reanimated";
-import * as Haptics from "expo-haptics";
+import { haptics } from "@/services/haptics";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
 import { QuizSummary } from "@/components/QuizSummary";
@@ -97,7 +97,7 @@ export default function QuizScreen() {
   const selectAnswer = useCallback(
     (answer: string) => {
       if (selectedNow) return; // locked after first tap
-      Haptics.selectionAsync();
+      haptics.selection();
       setSelectedNow(answer);
       scale.value = withSpring(1.02, { damping: 12 }, () => {
         scale.value = withSpring(1);
@@ -122,10 +122,10 @@ export default function QuizScreen() {
 
     setResult(r);
     setPhase("result");
-    Haptics.notificationAsync(
+    haptics.notify(
       r.passed
-        ? Haptics.NotificationFeedbackType.Success
-        : Haptics.NotificationFeedbackType.Warning
+        ? haptics.NotificationFeedbackType.Success
+        : haptics.NotificationFeedbackType.Warning
     );
   }, [quizQuestions, userAnswers, recordAnswers]);
 
