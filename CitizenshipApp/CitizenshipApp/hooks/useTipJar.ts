@@ -7,19 +7,20 @@ import { loadSupporterFlag, persistSupporterFlag } from "@/services/supporter";
 // it so the Tip Jar degrades gracefully (shows tiers + fallback prices) instead
 // of crashing. Real purchases run in a dev build or a store build.
 const IS_EXPO_GO = Constants.appOwnership === "expo";
-import {
-  initConnection,
-  endConnection,
-  getProducts,
-  requestPurchase,
-  finishTransaction,
-  purchaseUpdatedListener,
-  purchaseErrorListener,
-  flushFailedPurchasesCachedAsPendingAndroid,
-  type Product,
-  type Purchase,
-  type PurchaseError,
-} from "react-native-iap";
+
+// Types are erased at compile time, so this import adds NO runtime code and is
+// safe in Expo Go.
+import type { Product, Purchase, PurchaseError } from "react-native-iap";
+
+// The real module is loaded lazily and ONLY outside Expo Go, so its native
+// bindings are never evaluated where they don't exist (which would red-screen
+// the app on load).
+type IapModule = typeof import("react-native-iap");
+let iapModule: IapModule | null = null;
+function getIap(): IapModule {
+  if (!iapModule) iapModule = require("react-native-iap") as IapModule;
+  return iapModule;
+}
 
 // ── Consumable product catalog ──────────────────────────────────────
 export const TIP_PRODUCT_IDS = [
@@ -109,15 +110,16 @@ export function useTipJar(): UseTipJar {
         return;
       }
 
+      const iap = getIap();
       try {
-        await initConnection();
+        await iap.initConnection();
 
         // Clean up any dangling Android transactions from a prior crash.
         if (Platform.OS === "android") {
-          await flushFailedPurchasesCachedAsPendingAndroid().catch(() => {});
+          await iap.flushFailedPurchasesCachedAsPendingAndroid().catch(() => {});
         }
 
-        const fetched = await getProducts({ skus: [...TIP_PRODUCT_IDS] });
+        const fetched = await iap.getProducts({ skus: [...TIP_PRODUCT_IDS] });
         if (mounted.current) {
           // Preserve our tier ordering regardless of store response order.
           const ordered = TIP_PRODUCT_IDS.map((id) =>
@@ -136,7 +138,7 @@ export function useTipJar(): UseTipJar {
       }
 
       // Purchase success → finish the transaction, then celebrate.
-      purchaseUpdateSub.current = purchaseUpdatedListener(
+      purchaseUpdateSub.current = iap.purchaseUpdatedListener(
         async (purchase: Purchase) => {
           const receipt =
             purchase.transactionReceipt ?? purchase.purchaseToken;
@@ -144,7 +146,7 @@ export function useTipJar(): UseTipJar {
 
           try {
             // Consumables must be consumed so the user can tip again later.
-            await finishTransaction({ purchase, isConsumable: true });
+            await iap.finishTransaction({ purchase, isConsumable: true });
             await persistSupporterFlag();
             if (mounted.current) {
               setHasTipped(true);
@@ -161,7 +163,7 @@ export function useTipJar(): UseTipJar {
       );
 
       // Purchase failure / cancellation.
-      purchaseErrorSub.current = purchaseErrorListener(
+      purchaseErrorSub.current = iap.purchaseErrorListener(
         (err: PurchaseError) => {
           if (!mounted.current) return;
           setIsProcessingPayment(false);
@@ -178,7 +180,7 @@ export function useTipJar(): UseTipJar {
       if (IS_EXPO_GO) return;
       purchaseUpdateSub.current?.remove();
       purchaseErrorSub.current?.remove();
-      endConnection();
+      iapModule?.endConnection();
     };
   }, []);
 
@@ -193,11 +195,12 @@ export function useTipJar(): UseTipJar {
     }
     setIsProcessingPayment(true);
     try {
+      const iap = getIap();
       // Platform-specific request shapes per react-native-iap.
       if (Platform.OS === "ios") {
-        await requestPurchase({ sku: productId });
+        await iap.requestPurchase({ sku: productId });
       } else {
-        await requestPurchase({ skus: [productId] });
+        await iap.requestPurchase({ skus: [productId] });
       }
       // Resolution continues in purchaseUpdatedListener / purchaseErrorListener.
     } catch (e) {
