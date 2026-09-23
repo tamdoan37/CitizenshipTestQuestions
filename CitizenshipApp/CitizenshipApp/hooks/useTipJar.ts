@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Platform } from "react-native";
-import { persistSupporterFlag } from "@/services/supporter";
+import { Platform, type EmitterSubscription } from "react-native";
+import Constants from "expo-constants";
+import { loadSupporterFlag, persistSupporterFlag } from "@/services/supporter";
+
+// In-app purchases use a native module that is NOT present in Expo Go. Detect
+// it so the Tip Jar degrades gracefully (shows tiers + fallback prices) instead
+// of crashing. Real purchases run in a dev build or a store build.
+const IS_EXPO_GO = Constants.appOwnership === "expo";
 import {
   initConnection,
   endConnection,
@@ -13,7 +19,6 @@ import {
   type Product,
   type Purchase,
   type PurchaseError,
-  type EmitterSubscription,
 } from "react-native-iap";
 
 // ── Consumable product catalog ──────────────────────────────────────
@@ -96,6 +101,14 @@ export function useTipJar(): UseTipJar {
       // Reflect any prior supporter status right away.
       setHasTipped(await loadSupporterFlag());
 
+      // Expo Go has no IAP native module: skip the store, keep the UI usable
+      // with fallback prices. Nothing below would work there and some calls
+      // would throw.
+      if (IS_EXPO_GO) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         await initConnection();
 
@@ -162,6 +175,7 @@ export function useTipJar(): UseTipJar {
 
     return () => {
       mounted.current = false;
+      if (IS_EXPO_GO) return;
       purchaseUpdateSub.current?.remove();
       purchaseErrorSub.current?.remove();
       endConnection();
@@ -171,6 +185,12 @@ export function useTipJar(): UseTipJar {
   // ── Fire the native payment sheet ─────────────────────────────────
   const requestTip = useCallback(async (productId: TipProductId) => {
     setError(null);
+    if (IS_EXPO_GO) {
+      setError(
+        "Tipping isn't available in Expo Go — it works in the published app. Thank you for the thought! 💙"
+      );
+      return;
+    }
     setIsProcessingPayment(true);
     try {
       // Platform-specific request shapes per react-native-iap.
