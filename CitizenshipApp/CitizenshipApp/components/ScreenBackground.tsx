@@ -1,12 +1,13 @@
 import React from "react";
-import { StyleSheet, type ViewStyle } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import { ImageBackground, StyleSheet, View, type ViewStyle } from "react-native";
 
 /**
- * App-wide screen background. A soft, indigo-tinted diagonal gradient so the
- * white content cards read as elevated instead of blending into a flat page.
- * Wrap a screen's SafeAreaView in this and set that view's background to
- * "transparent" so the gradient shows through.
+ * App-wide screen background: the Statue of Liberty artwork, heavily blurred
+ * with a translucent light veil on top so it adds a patriotic backdrop without
+ * hurting the legibility of the white content cards.
+ *
+ * Wrap a screen's SafeAreaView in this and keep that view's background
+ * "transparent" so the backdrop shows through.
  */
 export function ScreenBackground({
   children,
@@ -16,17 +17,23 @@ export function ScreenBackground({
   style?: ViewStyle;
 }) {
   return (
-    <LinearGradient
-      colors={["#e7ecfb", "#f3f1fb", "#e6edff"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
+    <ImageBackground
+      source={require("../assets/liberty-bg.png")}
+      resizeMode="cover"
+      blurRadius={18}
       style={[styles.fill, style]}
     >
+      {/* Readability veil — keeps content crisp over the blurred photo. */}
+      <View style={styles.veil} pointerEvents="none" />
       {children}
-    </LinearGradient>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
+  fill: { flex: 1, backgroundColor: "#e7ecfb" },
+  veil: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(244,246,252,0.84)",
+  },
 });
