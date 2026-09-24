@@ -13,6 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
 import { ScreenBackground } from "@/components/ScreenBackground";
 import { QUESTIONS, CATEGORIES } from "@/data/questions";
+import { STUDY_MODE_BY_KEY, DEFAULT_QUICK_KEYS } from "@/data/studyModes";
 import { loadSupporterFlag } from "@/services/supporter";
 import type { Category } from "@/types";
 
@@ -66,6 +67,15 @@ export default function Dashboard() {
     () => trackers.filter((t) => t.weight > 1.5).length,
     [trackers]
   );
+
+  // ── Quick Study shortcuts: the user's favorite modes, or the sensible
+  //    default pair (Flashcards + Quiz) when they haven't picked any yet. ──
+  const quickModes = useMemo(() => {
+    const favKeys = settings.favoriteModes ?? [];
+    const resolved = favKeys.map((k) => STUDY_MODE_BY_KEY[k]).filter(Boolean);
+    const keys = resolved.length ? favKeys : DEFAULT_QUICK_KEYS;
+    return keys.map((k) => STUDY_MODE_BY_KEY[k]).filter(Boolean);
+  }, [settings.favoriteModes]);
 
   // ── Supporter badge (refreshes when returning from the Tip Jar) ─────
   const [isSupporter, setIsSupporter] = useState(false);
@@ -208,25 +218,20 @@ export default function Dashboard() {
           ))}
         </View>
 
-        {/* ── Quick actions ─────────────────────────────── */}
+        {/* ── Quick actions (driven by the user's favorite modes) ── */}
         <Text style={styles.sectionTitle}>Quick Study</Text>
-        <View style={styles.actionsRow}>
-          <TouchableOpacity
-            style={[styles.action, { backgroundColor: "#4f46e5" }]}
-            onPress={() => router.push("/flashcards")}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="layers" size={28} color="#fff" />
-            <Text style={styles.actionLabel}>Flashcards</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.action, { backgroundColor: "#16a34a" }]}
-            onPress={() => router.push("/quiz")}
-            activeOpacity={0.85}
-          >
-            <Ionicons name="checkmark-circle" size={28} color="#fff" />
-            <Text style={styles.actionLabel}>Take Quiz</Text>
-          </TouchableOpacity>
+        <View style={styles.actionsGrid}>
+          {quickModes.map((m) => (
+            <TouchableOpacity
+              key={m.key}
+              style={[styles.action, { backgroundColor: m.color }]}
+              onPress={() => router.push(m.href)}
+              activeOpacity={0.85}
+            >
+              <Ionicons name={m.icon} size={26} color="#fff" />
+              <Text style={styles.actionLabel}>{m.title}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
         <TouchableOpacity
@@ -316,7 +321,7 @@ const styles = StyleSheet.create({
   },
   headerLeft: { flex: 1 },
   headerRight: { flexDirection: "row", alignItems: "center", gap: 10 },
-  greeting: { fontSize: 14, color: "#64748b", fontWeight: "500" },
+  greeting: { fontSize: 14, color: "#475569", fontWeight: "600" },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 },
   title: { fontSize: 24, fontWeight: "800", color: "#1a1f36" },
   supporterStar: {
@@ -458,8 +463,9 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
   catBarFill: { height: "100%", borderRadius: 3 },
-  actionsRow: {
+  actionsGrid: {
     flexDirection: "row",
+    flexWrap: "wrap",
     marginHorizontal: 20,
     gap: 12,
     marginTop: 12,
@@ -486,14 +492,15 @@ const styles = StyleSheet.create({
   historyRight: { flexDirection: "row", alignItems: "center", gap: 6 },
   historyMeta: { fontSize: 13, color: "#94a3b8", fontWeight: "500" },
   action: {
-    flex: 1,
+    flexBasis: "47%",
+    flexGrow: 1,
     borderRadius: 20,
     padding: 20,
     alignItems: "center",
     gap: 10,
-    shadowColor: "#4f46e5",
+    shadowColor: "#0f172a",
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.18,
     shadowRadius: 12,
     elevation: 6,
   },

@@ -1,30 +1,37 @@
 import React from "react";
-import { StyleSheet, Text, View } from "react-native";
+import { Image, StyleSheet, View } from "react-native";
 
 /**
- * Simple "Liberty" bird mascot placeholder — an emoji in a soft amber disc.
- * (Kept dependency-free; swap for an SVG/Lottie later.)
+ * "Liberty" mascot — the Statue of Liberty artwork (same source as the app
+ * background), cropped to the torch + crown + face and shown in a soft amber
+ * ring so it reads as a friendly badge.
  */
 export function Mascot({ size = 72 }: { size?: number }) {
+  const radius = size / 2;
   return (
     <View
       style={[
-        styles.circle,
-        { width: size, height: size, borderRadius: size / 2 },
+        styles.ring,
+        { width: size, height: size, borderRadius: radius, borderWidth: Math.max(2, size * 0.03) },
       ]}
     >
-      <Text style={{ fontSize: size * 0.5 }}>🦅</Text>
+      <Image
+        source={require("../assets/liberty-mascot.png")}
+        style={{ width: size, height: size, borderRadius: radius }}
+        resizeMode="cover"
+        accessibilityLabel="Statue of Liberty"
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  circle: {
-    backgroundColor: "rgba(245,158,11,0.18)",
-    borderWidth: 2,
-    borderColor: "rgba(245,158,11,0.45)",
+  ring: {
+    backgroundColor: "rgba(15,23,42,0.9)",
+    borderColor: "rgba(245,158,11,0.75)",
     alignItems: "center",
     justifyContent: "center",
     alignSelf: "center",
+    overflow: "hidden",
   },
 });

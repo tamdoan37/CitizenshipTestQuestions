@@ -120,7 +120,7 @@ export default function QuizScreen() {
       }))
     );
 
-    recordQuizResult(r);
+    recordQuizResult(r, userAnswers);
     setResult(r);
     setPhase("result");
     haptics.notify(

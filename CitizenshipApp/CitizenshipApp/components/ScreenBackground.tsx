@@ -35,8 +35,9 @@ const styles = StyleSheet.create({
   fill: { flex: 1, backgroundColor: "#1e1b4b" },
   veil: {
     ...StyleSheet.absoluteFillObject,
-    // Lower opacity = more visible image; raise it toward 0.6 if text over the
-    // backdrop (e.g. the dashboard greeting) gets hard to read.
-    backgroundColor: "rgba(244,246,252,0.4)",
+    // Strong enough that dark text and faded labels floating over the backdrop
+    // stay comfortably readable, while the blurred statue still reads as a soft
+    // patriotic wash behind the white content cards.
+    backgroundColor: "rgba(245,247,252,0.82)",
   },
 });
