@@ -14,6 +14,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
 import { ScreenBackground } from "@/components/ScreenBackground";
+import { speech } from "@/services/speech";
 import { useNotifications } from "@/hooks/useNotifications";
 
 const US_STATES: Array<[name: string, code: string]> = [
@@ -201,6 +202,32 @@ export default function SettingsScreen() {
               );
             })}
           </View>
+
+          <Text style={[styles.cardLabel, { marginTop: 16 }]}>Voice</Text>
+          <Text style={styles.cardSub}>Used everywhere the app reads aloud, including Listen Mode.</Text>
+          <View style={styles.rateRow}>
+            {(["female", "male"] as const).map((g) => {
+              const active = settings.voiceGender === g;
+              return (
+                <TouchableOpacity
+                  key={g}
+                  style={[styles.rateBtn, styles.voiceBtn, active && styles.rateBtnActive]}
+                  onPress={() => {
+                    speech.setVoiceGender(g);
+                    updateSettings({ voiceGender: g });
+                  }}
+                >
+                  <Ionicons name={g === "female" ? "woman" : "man"} size={16} color={active ? "#fff" : "#475569"} />
+                  <Text style={[styles.rateBtnText, active && styles.rateBtnTextActive]}>
+                    {g === "female" ? "Female" : "Male"}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <Text style={styles.cardSub}>
+            Voices depend on your device; if only one is installed, both sound the same.
+          </Text>
         </View>
 
         {/* ── Update Officials ───────────────────────────── */}
@@ -254,7 +281,7 @@ export default function SettingsScreen() {
           <View style={{ flex: 1 }}>
             <Text style={styles.supportTitle}>Support this app</Text>
             <Text style={styles.supportSub}>
-              Optional tips keep it free and ad-free for all.
+              Rate, review, or share it — always free, no ads.
             </Text>
           </View>
           <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
@@ -416,6 +443,7 @@ const styles = StyleSheet.create({
   rateBtnActive: { backgroundColor: "#4f46e5" },
   rateBtnText: { fontSize: 14, fontWeight: "600", color: "#475569" },
   rateBtnTextActive: { color: "#fff" },
+  voiceBtn: { flexDirection: "row", gap: 6 },
   supportCard: {
     flexDirection: "row",
     alignItems: "center",

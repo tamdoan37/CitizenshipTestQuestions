@@ -8,7 +8,6 @@ import { ModeHeader } from "@/components/ModeHeader";
 import { BottomNav } from "@/components/BottomNav";
 import { speech } from "@/services/speech";
 import { useApp } from "@/context/AppContext";
-import type { VoiceGender } from "@/services/speech";
 
 const CYAN = "#06b6d4";
 const SPEEDS = [0.75, 1.0, 1.25, 1.5];
@@ -16,8 +15,11 @@ const clampRate = (r: number) => Math.min(Math.max(r, 0.5), 2);
 
 /**
  * Hands-free Listen Mode. Auto-plays each question, then all of its answers,
- * then advances — looping through the whole deck nonstop. The user can pick the
- * playback speed and a male/female voice; both apply immediately.
+ * then advances — looping through the whole deck nonstop.
+ *
+ * A per-utterance watchdog timer advances the deck even if the platform's
+ * speech engine never fires onDone (a known web/Chrome quirk), so autoplay
+ * keeps moving on every device. Voice is chosen in Settings.
  */
 export default function ListenScreen() {
   const { questions, settings, updateSettings } = useApp();
@@ -27,7 +29,7 @@ export default function ListenScreen() {
   const [playing, setPlaying] = useState(true);
   const [phase, setPhase] = useState<"question" | "answer">("question");
 
-  // A token guards against stale onDone callbacks after stop / manual nav.
+  // Guards against stale callbacks/watchdogs after stop, nav, or setting change.
   const token = useRef(0);
 
   useEffect(() => {
@@ -37,37 +39,53 @@ export default function ListenScreen() {
 
     const myToken = ++token.current;
     const rate = clampRate(settings.ttsRate);
+    let watchdog: ReturnType<typeof setTimeout> | undefined;
+    let voice: string | undefined;
 
-    (async () => {
-      speech.setVoiceGender(settings.voiceGender);
-      const voice = await speech.getVoiceId();
+    const estimateMs = (text: string) => {
+      const words = text.trim().split(/\s+/).length || 1;
+      return Math.max(2500, (words / (2.4 * rate)) * 1000 + 1400);
+    };
+
+    const speakStep = (text: string, onDone: () => void) => {
       if (token.current !== myToken) return;
-
-      setPhase("question");
-      Speech.stop();
-      Speech.speak(q.text, {
+      let finished = false;
+      const finish = () => {
+        if (finished || token.current !== myToken) return;
+        finished = true;
+        if (watchdog) clearTimeout(watchdog);
+        onDone();
+      };
+      Speech.speak(text, {
         language: "en-US",
         rate,
         voice,
-        onDone: () => {
-          if (token.current !== myToken) return;
-          setPhase("answer");
-          Speech.speak(q.answers.join(". "), {
-            language: "en-US",
-            rate,
-            voice,
-            onDone: () => {
-              if (token.current !== myToken) return;
-              setPhase("question");
-              setIndex((i) => (i + 1) % deck.length);
-            },
-          });
-        },
+        onDone: finish,
+        onStopped: () => { if (watchdog) clearTimeout(watchdog); },
+        onError: finish,
+      });
+      // Backup: advance even if onDone never fires.
+      watchdog = setTimeout(finish, estimateMs(text));
+    };
+
+    (async () => {
+      speech.setVoiceGender(settings.voiceGender);
+      voice = await speech.getVoiceId();
+      if (token.current !== myToken) return;
+      setPhase("question");
+      Speech.stop();
+      speakStep(q.text, () => {
+        setPhase("answer");
+        speakStep(q.answers.join(". "), () => {
+          setPhase("question");
+          setIndex((i) => (i + 1) % deck.length);
+        });
       });
     })();
 
     return () => {
-      token.current++; // invalidate callbacks for this card
+      token.current++;
+      if (watchdog) clearTimeout(watchdog);
       Speech.stop();
     };
   }, [index, playing, deck, settings.ttsRate, settings.voiceGender]);
@@ -96,12 +114,6 @@ export default function ListenScreen() {
   const nearestSpeed = SPEEDS.reduce((best, s) =>
     Math.abs(s - settings.ttsRate) < Math.abs(best - settings.ttsRate) ? s : best
   , SPEEDS[0]);
-
-  const setSpeed = (s: number) => updateSettings({ ttsRate: s });
-  const setVoice = (g: VoiceGender) => {
-    speech.setVoiceGender(g);
-    updateSettings({ voiceGender: g });
-  };
 
   return (
     <ScreenBackground>
@@ -134,10 +146,12 @@ export default function ListenScreen() {
           </View>
 
           <Text style={styles.hint}>
-            {playing ? "Playing hands-free — sit back and listen." : "Paused."}
+            {playing
+              ? "Auto-playing hands-free — question, then answers, on repeat."
+              : "Paused. Press play to resume."}
           </Text>
 
-          {/* Speed */}
+          {/* Speed (voice is chosen in Settings) */}
           <Text style={styles.ctrlLabel}>Speed</Text>
           <View style={styles.chipRow}>
             {SPEEDS.map((s) => {
@@ -146,33 +160,9 @@ export default function ListenScreen() {
                 <TouchableOpacity
                   key={s}
                   style={[styles.chip, active && styles.chipActive]}
-                  onPress={() => setSpeed(s)}
+                  onPress={() => updateSettings({ ttsRate: s })}
                 >
                   <Text style={[styles.chipText, active && styles.chipTextActive]}>{s}x</Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
-
-          {/* Voice */}
-          <Text style={styles.ctrlLabel}>Voice</Text>
-          <View style={styles.chipRow}>
-            {(["female", "male"] as VoiceGender[]).map((g) => {
-              const active = settings.voiceGender === g;
-              return (
-                <TouchableOpacity
-                  key={g}
-                  style={[styles.voiceChip, active && styles.chipActive]}
-                  onPress={() => setVoice(g)}
-                >
-                  <Ionicons
-                    name={g === "female" ? "woman" : "man"}
-                    size={16}
-                    color={active ? "#fff" : "#64748b"}
-                  />
-                  <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                    {g === "female" ? "Female" : "Male"}
-                  </Text>
                 </TouchableOpacity>
               );
             })}
@@ -220,10 +210,6 @@ const styles = StyleSheet.create({
   chip: {
     flex: 1, paddingVertical: 9, borderRadius: 12, backgroundColor: "#fff", alignItems: "center",
     borderWidth: 1, borderColor: "#e2e8f0",
-  },
-  voiceChip: {
-    flex: 1, flexDirection: "row", gap: 6, paddingVertical: 9, borderRadius: 12, backgroundColor: "#fff",
-    alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "#e2e8f0",
   },
   chipActive: { backgroundColor: CYAN, borderColor: CYAN },
   chipText: { fontSize: 14, fontWeight: "700", color: "#64748b" },
