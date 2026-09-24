@@ -152,9 +152,20 @@ export function Flashcard({ question, ttsRate = 0.9, onReveal }: Props) {
             </Text>
           </View>
 
-          <Text style={styles.answerLabel}>
-            {hasPreferred ? "Your Selected Answers" : "Acceptable Answers"}
-          </Text>
+          <View style={styles.answerLabelRow}>
+            <Text style={styles.answerLabel}>
+              {hasPreferred ? "Your Selected Answers" : "Acceptable Answers"}
+            </Text>
+            <TouchableOpacity
+              onPress={speakAnswer}
+              hitSlop={10}
+              style={styles.hearAll}
+              accessibilityLabel="Read all answers aloud"
+            >
+              <Ionicons name="volume-high" size={16} color="#312e81" />
+              <Text style={styles.hearAllText}>Hear all</Text>
+            </TouchableOpacity>
+          </View>
 
           <ScrollView
             style={styles.answerList}
@@ -233,15 +244,6 @@ export function Flashcard({ question, ttsRate = 0.9, onReveal }: Props) {
           <Text style={[styles.hint, { color: "#c7d2fe" }]}>
             Tap an answer to hear it · 🔖 pin your easiest
           </Text>
-
-          <TouchableOpacity
-            onPress={speakAnswer}
-            style={[styles.speaker, styles.speakerBack]}
-            hitSlop={12}
-            accessibilityLabel="Read the answer aloud"
-          >
-            <Ionicons name="volume-high" size={22} color="#312e81" />
-          </TouchableOpacity>
         </Pressable>
       </Animated.View>
     </View>
@@ -296,16 +298,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  // Same speaker, sitting on the dark answer side — brighter so it stands out.
-  speakerBack: { backgroundColor: "#e0e7ff" },
+  answerLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
   answerLabel: {
     fontSize: 11,
     fontWeight: "700",
     color: "#a5b4fc",
     letterSpacing: 1,
     textTransform: "uppercase",
-    marginTop: 8,
+    flexShrink: 1,
   },
+  // "Hear all" pill next to the label — reads every shown answer aloud.
+  hearAll: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#e0e7ff",
+    borderRadius: 14,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+  hearAllText: { fontSize: 12, fontWeight: "700", color: "#312e81" },
   answerList: { flex: 1, marginVertical: 8 },
   answerListContent: { gap: 10, flexGrow: 1, justifyContent: "center" },
   showAll: {
