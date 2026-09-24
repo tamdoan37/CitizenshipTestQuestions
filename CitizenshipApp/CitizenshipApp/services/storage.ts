@@ -31,6 +31,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   notificationTime: "09:00",
   ttsRate: 0.9,
   favoriteModes: [],
+  voiceGender: "female",
 };
 
 /** Every question starts with a neutral weight of 1. */

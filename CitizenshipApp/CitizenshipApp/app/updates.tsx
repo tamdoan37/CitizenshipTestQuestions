@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { ScreenBackground } from "@/components/ScreenBackground";
 import { ModeHeader } from "@/components/ModeHeader";
+import { BottomNav } from "@/components/BottomNav";
 
 const POINTS: { icon: keyof typeof Ionicons.glyphMap; title: string; body: string }[] = [
   {
@@ -58,6 +59,7 @@ export default function UpdatesScreen() {
             Always confirm current answers at uscis.gov/citizenship/testupdates.
           </Text>
         </ScrollView>
+        <BottomNav />
       </SafeAreaView>
     </ScreenBackground>
   );

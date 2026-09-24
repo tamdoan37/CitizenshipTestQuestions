@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { ScreenBackground } from "@/components/ScreenBackground";
 import { ModeHeader } from "@/components/ModeHeader";
+import { BottomNav } from "@/components/BottomNav";
 import { speech } from "@/services/speech";
 import { useApp } from "@/context/AppContext";
 import { VOCABULARY } from "@/data/vocabulary";
@@ -63,6 +64,7 @@ export default function VocabScreen() {
             <Ionicons name="arrow-forward" size={20} color={index >= VOCABULARY.length - 1 ? "#cbd5e1" : "#4f46e5"} />
           </TouchableOpacity>
         </View>
+        <BottomNav />
       </SafeAreaView>
     </ScreenBackground>
   );

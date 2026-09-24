@@ -5,6 +5,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ScreenBackground } from "@/components/ScreenBackground";
 import { ModeHeader } from "@/components/ModeHeader";
+import { BottomNav } from "@/components/BottomNav";
 import { speech } from "@/services/speech";
 import { useApp } from "@/context/AppContext";
 import type { Question } from "@/types";
@@ -36,7 +37,7 @@ function pickInterview(questions: Question[], weightById: Record<number, number>
 }
 
 export default function MockInterviewScreen() {
-  const { questions, weightById, settings, recordAnswers } = useApp();
+  const { questions, weightById, settings, recordAnswers, preferredAnswers, togglePreferredAnswer } = useApp();
 
   const [sessionKey, setSessionKey] = useState(0);
   const deck = useMemo(
@@ -119,6 +120,7 @@ export default function MockInterviewScreen() {
               <Text style={styles.secondaryText}>Back to Study</Text>
             </TouchableOpacity>
           </View>
+          <BottomNav />
         </SafeAreaView>
       </ScreenBackground>
     );
@@ -157,12 +159,33 @@ export default function MockInterviewScreen() {
 
             {revealed && (
               <View style={styles.answerBox}>
-                {q.answers.map((a, i) => (
-                  <View key={i} style={styles.answerRow}>
-                    <Ionicons name="checkmark" size={16} color="#16a34a" />
-                    <Text style={styles.answerText}>{a}</Text>
-                  </View>
-                ))}
+                {q.answers.map((a, i) => {
+                  const pinned = (preferredAnswers[q.id] ?? []).includes(a);
+                  return (
+                    <View key={i} style={styles.answerRow}>
+                      <Ionicons name="checkmark" size={16} color="#16a34a" />
+                      <Text style={styles.answerText}>{a}</Text>
+                      <TouchableOpacity
+                        onPress={() => speech.speak(a, settings.ttsRate)}
+                        hitSlop={8}
+                        accessibilityLabel="Read this answer aloud"
+                      >
+                        <Ionicons name="volume-medium" size={18} color="#16a34a" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => togglePreferredAnswer(q.id, a)}
+                        hitSlop={8}
+                        accessibilityLabel={pinned ? "Unpin answer" : "Pin easiest answer"}
+                      >
+                        <Ionicons
+                          name={pinned ? "bookmark" : "bookmark-outline"}
+                          size={18}
+                          color="#f59e0b"
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
               </View>
             )}
           </View>
@@ -184,6 +207,7 @@ export default function MockInterviewScreen() {
             <Text style={styles.revealText}>Show answer</Text>
           </TouchableOpacity>
         )}
+        <BottomNav />
       </SafeAreaView>
     </ScreenBackground>
   );
@@ -195,8 +219,9 @@ const styles = StyleSheet.create({
   tallyGood: { fontSize: 14, fontWeight: "800", color: "#16a34a" },
   tallyBad: { fontSize: 14, fontWeight: "800", color: RED },
   progressRow: { paddingHorizontal: 20, paddingBottom: 4 },
-  progressText: { fontSize: 13, color: "#64748b", fontWeight: "600" },
+  progressText: { fontSize: 13, color: "#334155", fontWeight: "700" },
   body: { flex: 1, justifyContent: "center", paddingHorizontal: 20 },
+  answerActions: { flexDirection: "row", alignItems: "center", gap: 14 },
   card: {
     backgroundColor: "#fff", borderRadius: 20, padding: 24, gap: 14,
     borderTopWidth: 5, borderTopColor: RED,

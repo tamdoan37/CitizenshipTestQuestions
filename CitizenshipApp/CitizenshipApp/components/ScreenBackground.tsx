@@ -38,6 +38,6 @@ const styles = StyleSheet.create({
     // Strong enough that dark text and faded labels floating over the backdrop
     // stay comfortably readable, while the blurred statue still reads as a soft
     // patriotic wash behind the white content cards.
-    backgroundColor: "rgba(245,247,252,0.82)",
+    backgroundColor: "rgba(245,247,252,0.9)",
   },
 });

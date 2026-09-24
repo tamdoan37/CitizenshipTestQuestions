@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   },
   startSub: {
     fontSize: 15,
-    color: "#64748b",
+    color: "#334155",
     textAlign: "center",
     lineHeight: 24,
     marginBottom: 28,

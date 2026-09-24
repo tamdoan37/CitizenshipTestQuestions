@@ -10,6 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ScreenBackground } from "@/components/ScreenBackground";
+import { BottomNav } from "@/components/BottomNav";
 import { useApp } from "@/context/AppContext";
 
 export default function HistoryScreen() {
@@ -151,6 +152,7 @@ export default function HistoryScreen() {
             })}
           </ScrollView>
         )}
+        <BottomNav />
       </SafeAreaView>
     </ScreenBackground>
   );

@@ -17,6 +17,7 @@ import type {
   QuizResult,
 } from "@/types";
 import { fetchCivicsData } from "@/services/api";
+import { speech } from "@/services/speech";
 import {
   DEFAULT_SETTINGS,
   applyAnswer,
@@ -182,6 +183,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     })();
   }, []);
+
+  // Keep the TTS voice preference in sync with settings for every speaker.
+  useEffect(() => {
+    speech.setVoiceGender(state.settings.voiceGender);
+  }, [state.settings.voiceGender]);
 
   // Read the override via a ref inside refreshCivicsData so that editing the
   // override doesn't change the callback's identity (which would otherwise

@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 import {
+  Image,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -110,7 +111,12 @@ export default function Dashboard() {
             <View>
               <Text style={styles.greeting}>Good{timeOfDay()},</Text>
               <View style={styles.titleRow}>
-                <Text style={styles.title}>{settings.userName} 🇺🇸</Text>
+                <Text style={styles.title}>{settings.userName}</Text>
+                <Image
+                  source={require("@/assets/us-flag.png")}
+                  style={styles.flag}
+                  accessibilityLabel="American flag"
+                />
                 {isSupporter && (
                   <View style={styles.supporterStar}>
                     <Ionicons name="star" size={14} color="#f59e0b" />
@@ -321,8 +327,9 @@ const styles = StyleSheet.create({
   },
   headerLeft: { flex: 1 },
   headerRight: { flexDirection: "row", alignItems: "center", gap: 10 },
-  greeting: { fontSize: 14, color: "#475569", fontWeight: "600" },
+  greeting: { fontSize: 14, color: "#334155", fontWeight: "700" },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 },
+  flag: { width: 30, height: 20, borderRadius: 3, marginLeft: 2 },
   title: { fontSize: 24, fontWeight: "800", color: "#1a1f36" },
   supporterStar: {
     width: 26,
