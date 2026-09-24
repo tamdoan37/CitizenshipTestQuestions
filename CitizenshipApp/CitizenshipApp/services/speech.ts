@@ -18,9 +18,10 @@ let cachedVoices: Speech.Voice[] | null = null;
 const voiceIdByKey: Record<string, string | undefined> = {};
 let preferredGender: VoiceGender | null = null;
 
-// "female" contains the substring "male", so test female first / use guards.
-const FEMALE = /(female|samantha|karen|moira|tessa|victoria|ava|allison|susan|zoe|nicky|fiona|serena|kate|stephanie|catherine|nora|joana|luciana|paulina)/i;
-const MALE = /([#_\- .]male|^male|aaron|fred|daniel|alex|arthur|thomas|rishi|gordon|oliver|reed|evan|nathan|diego|jorge|xander|male_)/i;
+// "female" contains the substring "male", so test female first / guard male.
+// Covers common voice names across iOS, Android, Windows, Edge and Chrome.
+const FEMALE = /(female|samantha|karen|moira|tessa|victoria|ava|allison|susan|zoe|nicky|fiona|serena|kate|stephanie|catherine|nora|joana|luciana|paulina|zira|aria|jenny|michelle|\bana\b|eva|hazel|emma|amber|ashley|cora|elizabeth|monica|nova|sonia|clara|google us english)/i;
+const MALE = /([#_\- .]male|^male|aaron|fred|daniel|\balex\b|arthur|thomas|rishi|gordon|oliver|reed|evan|nathan|diego|jorge|xander|david|\bmark\b|\bguy\b|christopher|\beric\b|roger|steffan|brandon|william|james|benjamin|liam|noah)/i;
 
 export function setVoiceGender(gender: VoiceGender | null | undefined): void {
   preferredGender = gender ?? null;
