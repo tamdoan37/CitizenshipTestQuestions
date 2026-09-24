@@ -26,6 +26,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   homeState: "WI",
   userName: "Future Citizen",
   hasOnboarded: false,
+  dailyGoal: 10,
   notificationsEnabled: false,
   notificationTime: "09:00",
   ttsRate: 0.9,

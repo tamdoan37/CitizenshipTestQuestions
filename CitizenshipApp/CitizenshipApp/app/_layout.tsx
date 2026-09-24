@@ -20,8 +20,16 @@ function RootNavigator() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="welcome" options={{ animation: "fade" }} />
+      <Stack.Screen name="onboarding" options={{ animation: "fade" }} />
       <Stack.Screen name="history" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="mock-interview" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="oral-practice" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="listen" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="read-write" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="review" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="vocab" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="weak-spots" options={{ animation: "slide_from_right" }} />
+      <Stack.Screen name="updates" options={{ animation: "slide_from_right" }} />
       <Stack.Screen
         name="tip-jar"
         options={{ presentation: "modal", animation: "slide_from_bottom" }}
