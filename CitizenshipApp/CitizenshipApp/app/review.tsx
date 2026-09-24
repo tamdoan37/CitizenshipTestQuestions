@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { ScreenBackground } from "@/components/ScreenBackground";
 import { ModeHeader } from "@/components/ModeHeader";
+import { BottomNav } from "@/components/BottomNav";
 import { useApp } from "@/context/AppContext";
 import type { Question } from "@/types";
 
@@ -63,6 +64,7 @@ export default function ReviewScreen() {
             </View>
           ))}
         </ScrollView>
+        <BottomNav />
       </SafeAreaView>
     </ScreenBackground>
   );

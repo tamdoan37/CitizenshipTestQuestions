@@ -5,6 +5,7 @@ import { router } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { ScreenBackground } from "@/components/ScreenBackground";
 import { ModeHeader } from "@/components/ModeHeader";
+import { BottomNav } from "@/components/BottomNav";
 import { useApp } from "@/context/AppContext";
 
 export default function WeakSpotsScreen() {
@@ -77,6 +78,7 @@ export default function WeakSpotsScreen() {
             })}
           </ScrollView>
         )}
+        <BottomNav />
       </SafeAreaView>
     </ScreenBackground>
   );

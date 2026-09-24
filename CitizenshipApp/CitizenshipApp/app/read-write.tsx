@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { ScreenBackground } from "@/components/ScreenBackground";
 import { ModeHeader } from "@/components/ModeHeader";
+import { BottomNav } from "@/components/BottomNav";
 import { speech } from "@/services/speech";
 import { useApp } from "@/context/AppContext";
 import { READING, WRITING } from "@/data/fluency";
@@ -96,6 +97,7 @@ export default function ReadWriteScreen() {
             <Ionicons name="arrow-forward" size={20} color={index >= deck.length - 1 ? "#cbd5e1" : "#4f46e5"} />
           </TouchableOpacity>
         </View>
+        <BottomNav />
       </SafeAreaView>
     </ScreenBackground>
   );

@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { ScreenBackground } from "@/components/ScreenBackground";
 import { ModeHeader } from "@/components/ModeHeader";
+import { BottomNav } from "@/components/BottomNav";
 import { speech } from "@/services/speech";
 import { useApp } from "@/context/AppContext";
 import type { Question } from "@/types";
@@ -18,7 +19,7 @@ function orderDeck(questions: Question[], weightById: Record<number, number>): Q
 }
 
 export default function OralPracticeScreen() {
-  const { questions, weightById, settings, recordAnswer } = useApp();
+  const { questions, weightById, settings, recordAnswer, preferredAnswers, togglePreferredAnswer } = useApp();
   const deck = useMemo(() => orderDeck(questions, weightById), [questions, weightById]);
 
   const [index, setIndex] = useState(0);
@@ -30,7 +31,7 @@ export default function OralPracticeScreen() {
   if (!q) return null;
 
   const askAgain = () => speech.speak(q.text, settings.ttsRate);
-  const hearAnswer = () => speech.speak(q.answers[0], settings.ttsRate);
+  const hearAnswer = () => speech.speak(q.answers.join(". "), settings.ttsRate);
 
   const rate = (wasCorrect: boolean) => {
     recordAnswer(q.id, wasCorrect);
@@ -61,15 +62,36 @@ export default function OralPracticeScreen() {
 
             {revealed ? (
               <View style={styles.answerBox}>
-                {q.answers.map((a, i) => (
-                  <View key={i} style={styles.answerRow}>
-                    <Ionicons name="checkmark" size={16} color="#16a34a" />
-                    <Text style={styles.answerText}>{a}</Text>
-                  </View>
-                ))}
+                {q.answers.map((a, i) => {
+                  const pinned = (preferredAnswers[q.id] ?? []).includes(a);
+                  return (
+                    <View key={i} style={styles.answerRow}>
+                      <Ionicons name="checkmark" size={16} color="#16a34a" />
+                      <Text style={styles.answerText}>{a}</Text>
+                      <TouchableOpacity
+                        onPress={() => speech.speak(a, settings.ttsRate)}
+                        hitSlop={8}
+                        accessibilityLabel="Read this answer aloud"
+                      >
+                        <Ionicons name="volume-medium" size={18} color="#16a34a" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => togglePreferredAnswer(q.id, a)}
+                        hitSlop={8}
+                        accessibilityLabel={pinned ? "Unpin answer" : "Pin easiest answer"}
+                      >
+                        <Ionicons
+                          name={pinned ? "bookmark" : "bookmark-outline"}
+                          size={18}
+                          color="#f59e0b"
+                        />
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
                 <TouchableOpacity style={styles.hearAnswer} onPress={hearAnswer}>
                   <Ionicons name="volume-high" size={16} color="#16a34a" />
-                  <Text style={styles.hearAnswerText}>Hear the answer</Text>
+                  <Text style={styles.hearAnswerText}>Hear all answers</Text>
                 </TouchableOpacity>
               </View>
             ) : (
@@ -96,6 +118,7 @@ export default function OralPracticeScreen() {
             <Text style={styles.revealText}>Reveal answer</Text>
           </TouchableOpacity>
         )}
+        <BottomNav />
       </SafeAreaView>
     </ScreenBackground>
   );

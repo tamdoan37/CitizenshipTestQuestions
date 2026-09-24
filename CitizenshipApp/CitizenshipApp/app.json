@@ -6,12 +6,22 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "scheme": "citizenshiptest",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f172a"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.yourname.citizenshiptest"
     },
     "android": {
       "package": "com.yourname.citizenshiptest",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0f172a"
+      },
       "permissions": [
         "RECEIVE_BOOT_COMPLETED",
         "SCHEDULE_EXACT_ALARM",
@@ -20,7 +30,8 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "static"
+      "output": "static",
+      "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-router",

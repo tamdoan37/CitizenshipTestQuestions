@@ -1,6 +1,9 @@
 import React from "react";
 import {
   ActivityIndicator,
+  Alert,
+  Linking,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -16,12 +19,36 @@ import Animated, {
   FadeInDown,
   ZoomIn,
 } from "react-native-reanimated";
-import { TIP_TIERS, useTipJar, type TipTier } from "@/hooks/useTipJar";
+import { useTipJar } from "@/hooks/useTipJar";
 import { ScreenBackground } from "@/components/ScreenBackground";
+
+const ESPRESSO_ID = "org.citizenship.tip.espresso";
+const ANDROID_PACKAGE = "com.yourname.citizenshiptest";
+// Set once the App Store listing is live to deep-link straight to the review.
+const IOS_APP_ID = "";
+
+async function openStoreListing(): Promise<void> {
+  let url = "";
+  if (Platform.OS === "android") {
+    url = `market://details?id=${ANDROID_PACKAGE}`;
+  } else if (Platform.OS === "ios" && IOS_APP_ID) {
+    url = `itms-apps://apps.apple.com/app/id${IOS_APP_ID}?action=write-review`;
+  }
+  try {
+    if (!url) throw new Error("no-listing");
+    const supported = await Linking.canOpenURL(url);
+    if (!supported) throw new Error("unsupported");
+    await Linking.openURL(url);
+  } catch {
+    Alert.alert(
+      "Thank you! 💙",
+      "The app store listing isn't live yet. Once the app is published, this will take you straight there to leave your rating and review."
+    );
+  }
+}
 
 export default function TipJarScreen() {
   const {
-    isLoading,
     isProcessingPayment,
     hasTipped,
     error,
@@ -63,10 +90,9 @@ export default function TipJarScreen() {
           </View>
           <Text style={styles.title}>Support the App</Text>
           <Text style={styles.subtitle}>
-            This app is 100% free — every question, quiz, and flashcard, for
-            every future citizen. If it's helped you on your journey, a small
-            tip keeps it{" "}
-            <Text style={styles.emphasis}>ad-free and open to all immigrants</Text>.
+            This app is 100% free for every future citizen. If it's helped you,
+            here are three easy ways to support it — {""}
+            <Text style={styles.emphasis}>rate it, write a review, or buy me an espresso</Text>.
             Never required, always appreciated.
           </Text>
         </Animated.View>
@@ -79,29 +105,38 @@ export default function TipJarScreen() {
           </Animated.View>
         )}
 
-        {/* ── Tip tiers ───────────────────────────────────── */}
-        {isLoading ? (
-          <View style={styles.loadingBlock}>
-            <ActivityIndicator size="large" color="#4f46e5" />
-            <Text style={styles.loadingText}>Loading tip options…</Text>
-          </View>
-        ) : (
-          <View style={styles.grid}>
-            {TIP_TIERS.map((tier, i) => (
-              <Animated.View
-                key={tier.id}
-                entering={FadeInDown.delay(120 + i * 90).duration(400)}
-              >
-                <TipCard
-                  tier={tier}
-                  price={priceFor(tier.id)}
-                  disabled={isProcessingPayment}
-                  onPress={() => requestTip(tier.id)}
-                />
-              </Animated.View>
-            ))}
-          </View>
-        )}
+        {/* ── Support options ─────────────────────────────── */}
+        <View style={styles.grid}>
+          <Animated.View entering={FadeInDown.delay(120).duration(400)}>
+            <SupportCard
+              icon="star"
+              title="Rate the app"
+              description="Leave a star rating — it helps other future citizens find it."
+              actionLabel="Rate"
+              onPress={openStoreListing}
+            />
+          </Animated.View>
+          <Animated.View entering={FadeInDown.delay(210).duration(400)}>
+            <SupportCard
+              icon="create"
+              title="Write a review"
+              description="Share a few words about your experience."
+              actionLabel="Review"
+              onPress={openStoreListing}
+            />
+          </Animated.View>
+          <Animated.View entering={FadeInDown.delay(300).duration(400)}>
+            <SupportCard
+              icon="cafe"
+              title="Buy me an espresso"
+              description="A tiny thank-you that keeps the app free and ad-free."
+              actionLabel={priceFor(ESPRESSO_ID)}
+              highlight
+              disabled={isProcessingPayment}
+              onPress={() => requestTip(ESPRESSO_ID)}
+            />
+          </Animated.View>
+        </View>
 
         {/* ── Compliance / reassurance footer ─────────────── */}
         <View style={styles.footer}>
@@ -130,17 +165,23 @@ export default function TipJarScreen() {
   );
 }
 
-// ── Tip tier card ─────────────────────────────────────────────────────
-function TipCard({
-  tier,
-  price,
-  disabled,
+// ── Support option card ───────────────────────────────────────────────
+function SupportCard({
+  icon,
+  title,
+  description,
+  actionLabel,
   onPress,
+  disabled,
+  highlight,
 }: {
-  tier: TipTier;
-  price: string;
-  disabled: boolean;
+  icon: keyof typeof Ionicons.glyphMap;
+  title: string;
+  description: string;
+  actionLabel: string;
   onPress: () => void;
+  disabled?: boolean;
+  highlight?: boolean;
 }) {
   return (
     <Pressable
@@ -153,14 +194,14 @@ function TipCard({
       ]}
     >
       <View style={styles.cardIcon}>
-        <Ionicons name={tier.icon} size={26} color="#4f46e5" />
+        <Ionicons name={icon} size={26} color="#4f46e5" />
       </View>
       <View style={styles.cardBody}>
-        <Text style={styles.cardTitle}>{tier.title}</Text>
-        <Text style={styles.cardDesc}>{tier.description}</Text>
+        <Text style={styles.cardTitle}>{title}</Text>
+        <Text style={styles.cardDesc}>{description}</Text>
       </View>
-      <View style={styles.priceButton}>
-        <Text style={styles.priceText}>{price}</Text>
+      <View style={[styles.priceButton, !highlight && styles.actionButton]}>
+        <Text style={[styles.priceText, !highlight && styles.actionText]}>{actionLabel}</Text>
       </View>
     </Pressable>
   );
@@ -287,6 +328,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   priceText: { color: "#fff", fontWeight: "800", fontSize: 15 },
+  // Rate / Review use an outline treatment; the espresso tip stays filled.
+  actionButton: { backgroundColor: "#eef2ff" },
+  actionText: { color: "#4f46e5" },
   footer: {
     flexDirection: "row",
     alignItems: "flex-start",

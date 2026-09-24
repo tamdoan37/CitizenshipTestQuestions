@@ -71,6 +71,7 @@ export interface AppSettings {
   notificationTime: string; // "HH:MM"
   ttsRate: number;
   favoriteModes: string[];  // study-mode keys the user pinned as their picks
+  voiceGender: "female" | "male"; // preferred TTS voice (best-effort per device)
 }
 
 /** A snapshot of one missed question, stored with a quiz so it can be reviewed
