@@ -76,6 +76,23 @@ export function Flashcard({ question, ttsRate = 0.9, onReveal }: Props) {
     speech.speak(question.text, ttsRate);
   }, [question.text, ttsRate]);
 
+  // Read every answer currently shown on the back (preferred set if pinned,
+  // otherwise all acceptable answers), separated so TTS pauses between them.
+  const speakAnswer = useCallback(() => {
+    haptics.selection();
+    const list = hasPreferred ? preferredList : question.answers;
+    speech.speak(list.join(". "), ttsRate);
+  }, [hasPreferred, preferredList, question.answers, ttsRate]);
+
+  // Read a single answer aloud — used when the user taps one specific answer.
+  const speakOne = useCallback(
+    (answer: string) => {
+      haptics.selection();
+      speech.speak(answer, ttsRate);
+    },
+    [ttsRate]
+  );
+
   const frontStyle = useAnimatedStyle(() => {
     const rotateY = interpolate(progress.value, [0, 1], [0, 180]);
     return {
@@ -135,9 +152,20 @@ export function Flashcard({ question, ttsRate = 0.9, onReveal }: Props) {
             </Text>
           </View>
 
-          <Text style={styles.answerLabel}>
-            {hasPreferred ? "Your Selected Answers" : "Acceptable Answers"}
-          </Text>
+          <View style={styles.answerLabelRow}>
+            <Text style={styles.answerLabel}>
+              {hasPreferred ? "Your Selected Answers" : "Acceptable Answers"}
+            </Text>
+            <TouchableOpacity
+              onPress={speakAnswer}
+              hitSlop={10}
+              style={styles.hearAll}
+              accessibilityLabel="Read all answers aloud"
+            >
+              <Ionicons name="volume-high" size={16} color="#312e81" />
+              <Text style={styles.hearAllText}>Hear all</Text>
+            </TouchableOpacity>
+          </View>
 
           <ScrollView
             style={styles.answerList}
@@ -145,9 +173,21 @@ export function Flashcard({ question, ttsRate = 0.9, onReveal }: Props) {
             showsVerticalScrollIndicator={false}
           >
             {(hasPreferred ? preferredList : question.answers).map((answer, i) => (
-              <View key={`p${i}`} style={styles.answerRow}>
+              <Pressable
+                key={`p${i}`}
+                style={styles.answerRow}
+                onPress={() => speakOne(answer)}
+                accessibilityLabel={`Read answer: ${answer}`}
+              >
                 <View style={styles.bullet} />
                 <Text style={styles.answerText}>{answer}</Text>
+                <TouchableOpacity
+                  onPress={() => speakOne(answer)}
+                  hitSlop={8}
+                  accessibilityLabel="Read this answer aloud"
+                >
+                  <Ionicons name="volume-medium" size={17} color="#c7d2fe" />
+                </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => togglePreferredAnswer(question.id, answer)}
                   hitSlop={8}
@@ -159,7 +199,7 @@ export function Flashcard({ question, ttsRate = 0.9, onReveal }: Props) {
                     color="#fbbf24"
                   />
                 </TouchableOpacity>
-              </View>
+              </Pressable>
             ))}
 
             {hasPreferred && otherList.length > 0 && (
@@ -173,9 +213,21 @@ export function Flashcard({ question, ttsRate = 0.9, onReveal }: Props) {
                 </TouchableOpacity>
                 {showAll &&
                   otherList.map((answer, i) => (
-                    <View key={`o${i}`} style={styles.answerRow}>
+                    <Pressable
+                      key={`o${i}`}
+                      style={styles.answerRow}
+                      onPress={() => speakOne(answer)}
+                      accessibilityLabel={`Read answer: ${answer}`}
+                    >
                       <View style={styles.bullet} />
                       <Text style={[styles.answerText, { opacity: 0.75 }]}>{answer}</Text>
+                      <TouchableOpacity
+                        onPress={() => speakOne(answer)}
+                        hitSlop={8}
+                        accessibilityLabel="Read this answer aloud"
+                      >
+                        <Ionicons name="volume-medium" size={17} color="#a5b4fc" />
+                      </TouchableOpacity>
                       <TouchableOpacity
                         onPress={() => togglePreferredAnswer(question.id, answer)}
                         hitSlop={8}
@@ -183,14 +235,14 @@ export function Flashcard({ question, ttsRate = 0.9, onReveal }: Props) {
                       >
                         <Ionicons name="bookmark-outline" size={17} color="#a5b4fc" />
                       </TouchableOpacity>
-                    </View>
+                    </Pressable>
                   ))}
               </>
             )}
           </ScrollView>
 
           <Text style={[styles.hint, { color: "#c7d2fe" }]}>
-            Tap to flip · 🔖 pin your easiest answers
+            Tap an answer to hear it · 🔖 pin your easiest
           </Text>
         </Pressable>
       </Animated.View>
@@ -246,14 +298,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  answerLabelRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
   answerLabel: {
     fontSize: 11,
     fontWeight: "700",
     color: "#a5b4fc",
     letterSpacing: 1,
     textTransform: "uppercase",
-    marginTop: 8,
+    flexShrink: 1,
   },
+  // "Hear all" pill next to the label — reads every shown answer aloud.
+  hearAll: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#e0e7ff",
+    borderRadius: 14,
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+  },
+  hearAllText: { fontSize: 12, fontWeight: "700", color: "#312e81" },
   answerList: { flex: 1, marginVertical: 8 },
   answerListContent: { gap: 10, flexGrow: 1, justifyContent: "center" },
   showAll: {

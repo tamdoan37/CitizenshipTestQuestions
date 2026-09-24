@@ -70,6 +70,18 @@ export interface AppSettings {
   notificationsEnabled: boolean;
   notificationTime: string; // "HH:MM"
   ttsRate: number;
+  favoriteModes: string[];  // study-mode keys the user pinned as their picks
+}
+
+/** A snapshot of one missed question, stored with a quiz so it can be reviewed
+ *  later even if the live official answers change. */
+export interface MissedQuestionSnapshot {
+  id: number;
+  number: number;
+  category: Category;
+  text: string;
+  correct: string;         // primary acceptable answer at the time of the quiz
+  your: string;            // the answer the user picked ("" if unanswered)
 }
 
 /** A completed quiz, stored for the history view (newest first). */
@@ -79,6 +91,8 @@ export interface QuizHistoryEntry {
   total: number;
   passed: boolean;
   durationSeconds: number;
+  /** Missed questions captured for review. Optional: older entries lack it. */
+  missed?: MissedQuestionSnapshot[];
 }
 
 /** User-supplied overrides for official names (applied over fetched data). */

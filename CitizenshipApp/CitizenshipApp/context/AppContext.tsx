@@ -142,9 +142,14 @@ interface AppContextValue extends AppState {
   refreshCivicsData: (force?: boolean) => Promise<void>;
   /** Pin/unpin a preferred (easiest) answer for a question. */
   togglePreferredAnswer: (questionId: number, answer: string) => Promise<void>;
-  /** Record a finished quiz into history. */
-  recordQuizResult: (result: QuizResult) => Promise<void>;
+  /** Record a finished quiz into history, including missed questions for review. */
+  recordQuizResult: (
+    result: QuizResult,
+    userAnswers?: Record<number, string>
+  ) => Promise<void>;
   clearQuizHistory: () => Promise<void>;
+  /** Pin/unpin a study mode as one of the user's favorites. */
+  toggleFavoriteMode: (key: string) => Promise<void>;
   /** Manually override official names; applied over fetched data immediately. */
   updateOfficials: (patch: OfficialsOverride) => Promise<void>;
 }
@@ -266,13 +271,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── Quiz history ────────────────────────────────────────────────────
   const recordQuizResult = useCallback(
-    async (result: QuizResult) => {
+    async (result: QuizResult, userAnswers?: Record<number, string>) => {
       const entry: QuizHistoryEntry = {
         date: new Date().toISOString(),
         score: result.score,
         total: result.total,
         passed: result.passed,
         durationSeconds: Math.round(result.duration / 1000),
+        missed: result.missedQuestions.map((q) => ({
+          id: q.id,
+          number: q.number,
+          category: q.category,
+          text: q.text,
+          correct: q.answers[0] ?? "",
+          your: userAnswers?.[q.id] ?? "",
+        })),
       };
       const next = [entry, ...state.quizHistory].slice(0, 100);
       dispatch({ type: "SET_HISTORY", quizHistory: next });
@@ -285,6 +298,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: "SET_HISTORY", quizHistory: [] });
     await saveQuizHistory([]);
   }, []);
+
+  // ── Favorite study modes ────────────────────────────────────────────
+  const toggleFavoriteMode = useCallback(
+    async (key: string) => {
+      const current = state.settings.favoriteModes ?? [];
+      const next = current.includes(key)
+        ? current.filter((k) => k !== key)
+        : [...current, key];
+      const updated = { ...state.settings, favoriteModes: next };
+      dispatch({ type: "SET_SETTINGS", settings: updated });
+      await saveSettings(updated);
+    },
+    [state.settings]
+  );
 
   // ── Officials override ──────────────────────────────────────────────
   const updateOfficials = useCallback(
@@ -322,6 +349,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       togglePreferredAnswer,
       recordQuizResult,
       clearQuizHistory,
+      toggleFavoriteMode,
       updateOfficials,
     }),
     [
@@ -334,6 +362,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       togglePreferredAnswer,
       recordQuizResult,
       clearQuizHistory,
+      toggleFavoriteMode,
       updateOfficials,
     ]
   );

@@ -30,6 +30,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   notificationsEnabled: false,
   notificationTime: "09:00",
   ttsRate: 0.9,
+  favoriteModes: [],
 };
 
 /** Every question starts with a neutral weight of 1. */
