@@ -65,7 +65,8 @@ export interface QuizResult {
 export interface AppSettings {
   homeState: string;        // 2-letter code, default "WI"
   userName: string;         // from onboarding, default "Future Citizen"
-  hasOnboarded: boolean;    // true once the welcome screen is completed
+  hasOnboarded: boolean;    // true once onboarding is completed
+  dailyGoal: number;        // questions/day: 5 (Light), 10 (Steady), 20 (Intense)
   notificationsEnabled: boolean;
   notificationTime: string; // "HH:MM"
   ttsRate: number;

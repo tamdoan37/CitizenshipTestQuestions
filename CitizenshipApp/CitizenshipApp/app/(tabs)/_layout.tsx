@@ -8,7 +8,7 @@ export default function TabLayout() {
 
   // Wait for persisted state, then route first-time users to onboarding.
   if (!hydrated) return null;
-  if (!settings.hasOnboarded) return <Redirect href="/welcome" />;
+  if (!settings.hasOnboarded) return <Redirect href="/onboarding" />;
 
   return (
     <Tabs
@@ -56,6 +56,15 @@ export default function TabLayout() {
           title: "Quiz",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="checkmark-circle" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="study"
+        options={{
+          title: "Study",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="book" size={size} color={color} />
           ),
         }}
       />
