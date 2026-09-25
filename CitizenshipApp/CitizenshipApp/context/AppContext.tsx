@@ -33,6 +33,7 @@ import {
   saveQuizHistory,
   saveSettings,
   saveTrackers,
+  clearAllData,
 } from "@/services/storage";
 import { QUESTIONS, patchDynamicAnswers } from "@/data/questions";
 
@@ -153,6 +154,8 @@ interface AppContextValue extends AppState {
   toggleFavoriteMode: (key: string) => Promise<void>;
   /** Manually override official names; applied over fetched data immediately. */
   updateOfficials: (patch: OfficialsOverride) => Promise<void>;
+  /** Wipe all saved data and return the app to a fresh-install state. */
+  resetApp: () => Promise<void>;
 }
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -337,6 +340,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     [state.officialsOverride, state.civicsData]
   );
 
+  // ── Reset everything to a fresh install ─────────────────────────────
+  const resetApp = useCallback(async () => {
+    await clearAllData();
+    dispatch({ type: "SET_SETTINGS", settings: DEFAULT_SETTINGS });
+    dispatch({ type: "SET_TRACKERS", trackers: buildInitialTrackers() });
+    dispatch({ type: "SET_PREFERRED", preferredAnswers: {} });
+    dispatch({ type: "SET_HISTORY", quizHistory: [] });
+    dispatch({ type: "SET_OVERRIDE", officialsOverride: {} });
+  }, []);
+
   // ── Derived: weight lookup for the quiz sampler ─────────────────────
   const weightById = useMemo(() => {
     const map: Record<number, number> = {};
@@ -357,6 +370,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       clearQuizHistory,
       toggleFavoriteMode,
       updateOfficials,
+      resetApp,
     }),
     [
       state,
@@ -370,6 +384,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       clearQuizHistory,
       toggleFavoriteMode,
       updateOfficials,
+      resetApp,
     ]
   );
 
