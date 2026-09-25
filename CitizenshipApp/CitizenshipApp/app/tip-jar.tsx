@@ -221,5 +221,5 @@ const styles = StyleSheet.create({
     marginTop: 28,
     paddingHorizontal: 4,
   },
-  footerText: { flex: 1, fontSize: 12, color: "#94a3b8", lineHeight: 18 },
+  footerText: { flex: 1, fontSize: 12, color: "#475569", lineHeight: 18 },
 });
