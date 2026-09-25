@@ -5,7 +5,8 @@ import { QUESTIONS } from "@/data/questions";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
   }),
@@ -34,10 +35,10 @@ export function useNotifications() {
           data: { questionId: q.id },
         },
         trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
           hour,
           minute,
-          repeats: true,
-        } as Notifications.DailyTriggerInput,
+        },
       });
     },
     []
