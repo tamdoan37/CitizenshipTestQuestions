@@ -332,8 +332,8 @@ const styles = StyleSheet.create({
   },
   startSub: {
     fontSize: 15,
-    color: "#334155",
-    fontWeight: "500",
+    color: "#0f172a",
+    fontWeight: "600",
     textAlign: "center",
     lineHeight: 24,
     marginBottom: 28,

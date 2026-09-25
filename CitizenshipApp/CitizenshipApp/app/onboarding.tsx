@@ -173,12 +173,12 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(255,255,255,0.75)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 5,
   },
   label: {
-    fontSize: 13, fontWeight: "800", letterSpacing: 0.5, textTransform: "uppercase", color: "#334155", marginBottom: 8,
-    textShadowColor: "rgba(255,255,255,0.7)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4,
+    fontSize: 13, fontWeight: "800", letterSpacing: 0.5, textTransform: "uppercase", color: "#0f172a", marginBottom: 8,
+    textShadowColor: "rgba(255,255,255,0.8)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 5,
   },
   hint: {
-    fontSize: 13, color: "#334155", fontWeight: "500", marginTop: 4, lineHeight: 18,
-    textShadowColor: "rgba(255,255,255,0.7)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4,
+    fontSize: 13, color: "#0f172a", fontWeight: "600", marginTop: 4, lineHeight: 18,
+    textShadowColor: "rgba(255,255,255,0.8)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 5,
   },
   nameInput: {
     backgroundColor: "#fff", borderRadius: 14, borderWidth: 1.5, borderColor: C.border,
@@ -200,8 +200,8 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(255,255,255,0.75)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 5,
   },
   goodLuckSub: {
-    fontSize: 16, color: "#334155", fontWeight: "500", textAlign: "center", lineHeight: 24,
-    textShadowColor: "rgba(255,255,255,0.7)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4,
+    fontSize: 16, color: "#0f172a", fontWeight: "600", textAlign: "center", lineHeight: 24,
+    textShadowColor: "rgba(255,255,255,0.8)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 5,
   },
   footerCenter: { alignSelf: "stretch", marginTop: 12 },
   backLink: { alignItems: "center", paddingVertical: 12 },

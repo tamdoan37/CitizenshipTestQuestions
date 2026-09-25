@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
   headerLeft: { flex: 1 },
   headerRight: { flexDirection: "row", alignItems: "center", gap: 10 },
   greeting: {
-    fontSize: 14, color: "#334155", fontWeight: "700",
+    fontSize: 14, color: "#0f172a", fontWeight: "700",
     textShadowColor: "rgba(255,255,255,0.7)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4,
   },
   titleRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 2 },

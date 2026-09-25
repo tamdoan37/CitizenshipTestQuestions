@@ -233,12 +233,12 @@ const styles = StyleSheet.create({
   answerRow: { flexDirection: "row", alignItems: "flex-start", gap: 8 },
   answer: { flex: 1, fontSize: 16, fontWeight: "600", color: "#0e7490", lineHeight: 22 },
   hint: {
-    fontSize: 13, color: "#1e293b", fontWeight: "600", textAlign: "center",
-    textShadowColor: "rgba(255,255,255,0.7)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4,
+    fontSize: 13, color: "#0f172a", fontWeight: "700", textAlign: "center",
+    textShadowColor: "rgba(255,255,255,0.8)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 5,
   },
   ctrlLabel: {
-    fontSize: 12, fontWeight: "800", letterSpacing: 0.6, textTransform: "uppercase", color: "#334155", alignSelf: "flex-start",
-    textShadowColor: "rgba(255,255,255,0.7)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4,
+    fontSize: 12, fontWeight: "800", letterSpacing: 0.6, textTransform: "uppercase", color: "#0f172a", alignSelf: "flex-start",
+    textShadowColor: "rgba(255,255,255,0.8)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 5,
   },
   chipRow: { flexDirection: "row", gap: 8, alignSelf: "stretch" },
   chip: {
