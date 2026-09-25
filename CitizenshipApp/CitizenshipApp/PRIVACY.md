@@ -65,4 +65,4 @@ updated" date.
 
 ## Contact
 
-Questions about this policy? Contact: **[add the support email you want shown publicly]**
+Questions about this policy? Contact: tamdoan37@hotmail.com
