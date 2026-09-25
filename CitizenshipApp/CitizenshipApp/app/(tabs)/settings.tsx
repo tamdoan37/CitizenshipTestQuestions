@@ -289,9 +289,13 @@ export default function SettingsScreen() {
 
         {/* ── About ──────────────────────────────────────── */}
         <View style={styles.about}>
-          <Text style={styles.aboutText}>US Citizenship Test · v1.0.0</Text>
+          <Text style={styles.aboutText}>Liberty Civics · v1.0.0</Text>
           <Text style={styles.aboutText}>
             2025 USCIS Civics Test · 128 Questions
+          </Text>
+          <Text style={[styles.aboutText, styles.disclaimer]}>
+            Not affiliated with or endorsed by USCIS or the U.S. government. Study
+            aid only — always confirm current answers at uscis.gov.
           </Text>
         </View>
       </ScrollView>
@@ -472,4 +476,5 @@ const styles = StyleSheet.create({
   supportSub: { fontSize: 12, color: "#94a3b8", marginTop: 2 },
   about: { alignItems: "center", marginTop: 28, gap: 4 },
   aboutText: { fontSize: 12, color: "#475569" },
+  disclaimer: { textAlign: "center", marginTop: 8, lineHeight: 17, paddingHorizontal: 12 },
 });

@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "US Citizenship Test",
+    "name": "Liberty Civics",
     "slug": "citizenship-test",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
-    "scheme": "citizenshiptest",
+    "scheme": "libertycivics",
     "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/icon.png",
@@ -14,10 +14,12 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourname.citizenshiptest"
+      "bundleIdentifier": "com.tamdoan.libertycivics",
+      "buildNumber": "1"
     },
     "android": {
-      "package": "com.yourname.citizenshiptest",
+      "package": "com.tamdoan.libertycivics",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0f172a"
