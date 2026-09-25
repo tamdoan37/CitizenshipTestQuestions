@@ -8,37 +8,60 @@ import { ModeHeader } from "@/components/ModeHeader";
 import { BottomNav } from "@/components/BottomNav";
 import { speech } from "@/services/speech";
 import { useApp } from "@/context/AppContext";
+import type { Question } from "@/types";
 
 const CYAN = "#06b6d4";
-const SPEEDS = [0.75, 1.0, 1.25, 1.5];
+const SPEEDS = [0.5, 0.75, 1.0, 1.25];
 const clampRate = (r: number) => Math.min(Math.max(r, 0.5), 2);
+const nearestSpeed = (r: number) =>
+  SPEEDS.reduce((best, s) => (Math.abs(s - r) < Math.abs(best - r) ? s : best), SPEEDS[0]);
 
 /**
- * Hands-free Listen Mode. Auto-plays each question, then all of its answers,
- * then advances — looping through the whole deck nonstop.
- *
- * A per-utterance watchdog timer advances the deck even if the platform's
- * speech engine never fires onDone (a known web/Chrome quirk), so autoplay
- * keeps moving on every device. Voice is chosen in Settings.
+ * Weighted-random pick across all questions. Higher SRS weight (questions the
+ * user misses more) → chosen more often, so important/weak ones repeat more.
+ * Never returns the same question twice in a row.
+ */
+function pickWeighted(
+  qs: Question[],
+  weightById: Record<number, number>,
+  excludeId?: number
+): Question {
+  const pool = excludeId != null ? qs.filter((q) => q.id !== excludeId) : qs;
+  if (pool.length === 0) return qs[0];
+  const weights = pool.map((q) => Math.max(weightById[q.id] ?? 1, 0.2));
+  const total = weights.reduce((s, w) => s + w, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < pool.length; i++) {
+    r -= weights[i];
+    if (r <= 0) return pool[i];
+  }
+  return pool[pool.length - 1];
+}
+
+/**
+ * Hands-free Listen Mode. Shuffles through all 128 questions weighted by how
+ * often you miss them, auto-playing each question then its answers, nonstop.
+ * A per-utterance watchdog advances even if the platform never fires onDone
+ * (a web/Chrome quirk). Voice is chosen in Settings; speed is local here.
  */
 export default function ListenScreen() {
-  const { questions, settings, updateSettings } = useApp();
-  const deck = questions;
+  const { questions, weightById, settings } = useApp();
 
-  const [index, setIndex] = useState(0);
+  const [current, setCurrent] = useState<Question>(() => pickWeighted(questions, weightById));
   const [playing, setPlaying] = useState(true);
   const [phase, setPhase] = useState<"question" | "answer">("question");
+  const [speed, setSpeed] = useState<number>(() => nearestSpeed(settings.ttsRate));
 
-  // Guards against stale callbacks/watchdogs after stop, nav, or setting change.
+  const history = useRef<Question[]>([]);
   const token = useRef(0);
 
   useEffect(() => {
     if (!playing) return;
-    const q = deck[index];
+    const q = current;
     if (!q) return;
 
     const myToken = ++token.current;
-    const rate = clampRate(settings.ttsRate);
+    const rate = clampRate(speed);
     let watchdog: ReturnType<typeof setTimeout> | undefined;
     let voice: string | undefined;
 
@@ -64,7 +87,6 @@ export default function ListenScreen() {
         onStopped: () => { if (watchdog) clearTimeout(watchdog); },
         onError: finish,
       });
-      // Backup: advance even if onDone never fires.
       watchdog = setTimeout(finish, estimateMs(text));
     };
 
@@ -77,8 +99,11 @@ export default function ListenScreen() {
       speakStep(q.text, () => {
         setPhase("answer");
         speakStep(q.answers.join(". "), () => {
+          // Advance to the next weighted-random question.
+          history.current.push(q);
+          if (history.current.length > 200) history.current.shift();
           setPhase("question");
-          setIndex((i) => (i + 1) % deck.length);
+          setCurrent(pickWeighted(questions, weightById, q.id));
         });
       });
     })();
@@ -88,12 +113,9 @@ export default function ListenScreen() {
       if (watchdog) clearTimeout(watchdog);
       Speech.stop();
     };
-  }, [index, playing, deck, settings.ttsRate, settings.voiceGender]);
+  }, [current, playing, speed, settings.voiceGender, questions, weightById]);
 
   useEffect(() => () => { Speech.stop(); }, []);
-
-  const q = deck[index];
-  if (!q) return null;
 
   const togglePlay = () => {
     if (playing) {
@@ -103,24 +125,30 @@ export default function ListenScreen() {
     setPlaying((p) => !p);
   };
 
-  const jump = (delta: number) => {
+  const goNext = () => {
     token.current++;
     Speech.stop();
+    history.current.push(current);
     setPhase("question");
-    setIndex((i) => (i + delta + deck.length) % deck.length);
+    setCurrent(pickWeighted(questions, weightById, current.id));
     setPlaying(true);
   };
 
-  const nearestSpeed = SPEEDS.reduce((best, s) =>
-    Math.abs(s - settings.ttsRate) < Math.abs(best - settings.ttsRate) ? s : best
-  , SPEEDS[0]);
+  const goPrev = () => {
+    token.current++;
+    Speech.stop();
+    setPhase("question");
+    const prev = history.current.pop();
+    setCurrent(prev ?? pickWeighted(questions, weightById, current.id));
+    setPlaying(true);
+  };
 
   return (
     <ScreenBackground>
       <SafeAreaView style={styles.root} edges={["top", "bottom"]}>
         <ModeHeader
           title="Listen Mode"
-          right={<Text style={styles.count}>{index + 1}/{deck.length}</Text>}
+          right={<Text style={styles.count}>#{current.number}</Text>}
         />
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -132,10 +160,10 @@ export default function ListenScreen() {
           </Text>
 
           <View style={styles.card}>
-            <Text style={styles.question}>{q.text}</Text>
+            <Text style={styles.question}>{current.text}</Text>
             {phase === "answer" && (
               <View style={styles.answerList}>
-                {q.answers.map((a, i) => (
+                {current.answers.map((a, i) => (
                   <View key={i} style={styles.answerRow}>
                     <Ionicons name="checkmark" size={15} color="#0e7490" />
                     <Text style={styles.answer}>{a}</Text>
@@ -147,20 +175,20 @@ export default function ListenScreen() {
 
           <Text style={styles.hint}>
             {playing
-              ? "Auto-playing hands-free — question, then answers, on repeat."
+              ? "Shuffling all 128 — questions you miss more play more often."
               : "Paused. Press play to resume."}
           </Text>
 
-          {/* Speed (voice is chosen in Settings) */}
+          {/* Speed */}
           <Text style={styles.ctrlLabel}>Speed</Text>
           <View style={styles.chipRow}>
             {SPEEDS.map((s) => {
-              const active = s === nearestSpeed;
+              const active = s === speed;
               return (
                 <TouchableOpacity
                   key={s}
                   style={[styles.chip, active && styles.chipActive]}
-                  onPress={() => updateSettings({ ttsRate: s })}
+                  onPress={() => setSpeed(s)}
                 >
                   <Text style={[styles.chipText, active && styles.chipTextActive]}>{s}x</Text>
                 </TouchableOpacity>
@@ -170,13 +198,13 @@ export default function ListenScreen() {
         </ScrollView>
 
         <View style={styles.controls}>
-          <TouchableOpacity style={styles.sideBtn} onPress={() => jump(-1)}>
+          <TouchableOpacity style={styles.sideBtn} onPress={goPrev}>
             <Ionicons name="play-skip-back" size={24} color="#334155" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.playBtn} onPress={togglePlay}>
             <Ionicons name={playing ? "pause" : "play"} size={30} color="#fff" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.sideBtn} onPress={() => jump(1)}>
+          <TouchableOpacity style={styles.sideBtn} onPress={goNext}>
             <Ionicons name="play-skip-forward" size={24} color="#334155" />
           </TouchableOpacity>
         </View>

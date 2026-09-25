@@ -213,6 +213,22 @@ export default function Dashboard() {
           ))}
         </View>
 
+        {/* ── Quiz history (above Category Scores) ────────── */}
+        <TouchableOpacity
+          style={styles.historyBtn}
+          onPress={() => router.push("/history")}
+          activeOpacity={0.85}
+        >
+          <View style={styles.historyLeft}>
+            <Ionicons name="bar-chart" size={20} color="#4f46e5" />
+            <Text style={styles.historyText}>Quiz History</Text>
+          </View>
+          <View style={styles.historyRight}>
+            <Text style={styles.historyMeta}>{quizHistory.length} taken</Text>
+            <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+          </View>
+        </TouchableOpacity>
+
         {/* ── Category scores (below Quick Study) ────────── */}
         <Text style={styles.sectionTitle}>Category Scores</Text>
         <View style={styles.card}>
@@ -243,21 +259,6 @@ export default function Dashboard() {
             </View>
           ))}
         </View>
-
-        <TouchableOpacity
-          style={styles.historyBtn}
-          onPress={() => router.push("/history")}
-          activeOpacity={0.85}
-        >
-          <View style={styles.historyLeft}>
-            <Ionicons name="bar-chart" size={20} color="#4f46e5" />
-            <Text style={styles.historyText}>Quiz History</Text>
-          </View>
-          <View style={styles.historyRight}>
-            <Text style={styles.historyMeta}>{quizHistory.length} taken</Text>
-            <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
-          </View>
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
     </ScreenBackground>

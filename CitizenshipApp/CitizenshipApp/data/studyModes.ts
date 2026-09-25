@@ -36,4 +36,4 @@ export const STUDY_MODE_BY_KEY: Record<string, StudyMode> = Object.fromEntries(
 );
 
 /** Default Quick Study shortcuts when the user hasn't picked any favorites. */
-export const DEFAULT_QUICK_KEYS = ["flashcards", "quiz"];
+export const DEFAULT_QUICK_KEYS = ["listen", "mock-interview", "oral-practice"];
