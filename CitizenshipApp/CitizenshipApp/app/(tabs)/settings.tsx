@@ -34,7 +34,25 @@ const US_STATES: Array<[name: string, code: string]> = [
 ];
 
 export default function SettingsScreen() {
-  const { settings, updateSettings, civicsData, updateOfficials } = useApp();
+  const { settings, updateSettings, civicsData, updateOfficials, resetApp } = useApp();
+
+  function confirmReset() {
+    Alert.alert(
+      "Reset app data?",
+      "This clears your name, home state, progress, quiz history, pinned answers, and settings, then restarts setup. This can't be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Reset",
+          style: "destructive",
+          onPress: async () => {
+            await resetApp();
+            router.replace("/onboarding");
+          },
+        },
+      ]
+    );
+  }
 
   // Officials updater fields (blank = keep current)
   const [showOfficials, setShowOfficials] = useState(false);
@@ -287,6 +305,21 @@ export default function SettingsScreen() {
           <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
         </TouchableOpacity>
 
+        {/* ── Reset ──────────────────────────────────────── */}
+        <SectionHeader icon="refresh" label="Reset" />
+        <TouchableOpacity style={styles.resetCard} onPress={confirmReset} activeOpacity={0.85}>
+          <View style={styles.resetIcon}>
+            <Ionicons name="trash" size={20} color="#dc2626" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.resetTitle}>Reset app data</Text>
+            <Text style={styles.supportSub}>
+              Clear everything and start setup over.
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
+        </TouchableOpacity>
+
         {/* ── About ──────────────────────────────────────── */}
         <View style={styles.about}>
           <Text style={styles.aboutText}>Liberty Civics · v1.0.0</Text>
@@ -474,6 +507,17 @@ const styles = StyleSheet.create({
   },
   supportTitle: { fontSize: 15, fontWeight: "700", color: "#1a1f36" },
   supportSub: { fontSize: 12, color: "#94a3b8", marginTop: 2 },
+  resetCard: {
+    flexDirection: "row", alignItems: "center", gap: 14,
+    backgroundColor: "#fff", borderRadius: 16, padding: 16,
+    borderWidth: 1, borderColor: "#fee2e2",
+    shadowColor: "#000", shadowOpacity: 0.04, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2,
+  },
+  resetIcon: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: "#fef2f2",
+    alignItems: "center", justifyContent: "center",
+  },
+  resetTitle: { fontSize: 15, fontWeight: "700", color: "#b91c1c" },
   about: { alignItems: "center", marginTop: 28, gap: 4 },
   aboutText: { fontSize: 12, color: "#475569" },
   disclaimer: { textAlign: "center", marginTop: 8, lineHeight: 17, paddingHorizontal: 12 },

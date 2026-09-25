@@ -126,3 +126,8 @@ export async function loadOfficialsOverride(): Promise<OfficialsOverride> {
 export async function saveOfficialsOverride(o: OfficialsOverride): Promise<void> {
   try { await AsyncStorage.setItem(KEYS.OVERRIDES, JSON.stringify(o)); } catch { /* ignore */ }
 }
+
+// ── Reset everything (returns the app to a fresh install) ──────────────
+export async function clearAllData(): Promise<void> {
+  try { await AsyncStorage.multiRemove(Object.values(KEYS)); } catch { /* ignore */ }
+}
