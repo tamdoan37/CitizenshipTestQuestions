@@ -177,7 +177,10 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 12,
   },
-  title: { fontSize: 20, fontWeight: "800", color: "#1a1f36" },
+  title: {
+    fontSize: 20, fontWeight: "800", color: "#0f172a",
+    textShadowColor: "rgba(255,255,255,0.75)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 5,
+  },
   clear: { fontSize: 14, fontWeight: "600", color: "#ef4444" },
   scroll: { padding: 16, paddingBottom: 40, gap: 10 },
   summary: { flexDirection: "row", gap: 10, marginBottom: 4 },
@@ -187,7 +190,10 @@ const styles = StyleSheet.create({
   },
   tileVal: { fontSize: 20, fontWeight: "700" },
   tileLbl: { fontSize: 10, fontWeight: "600", letterSpacing: 0.4, textTransform: "uppercase", color: "#9ca3af", marginTop: 4 },
-  hint: { fontSize: 12, color: "#64748b", marginLeft: 4, marginBottom: 2 },
+  hint: {
+    fontSize: 12, color: "#334155", fontWeight: "500", marginLeft: 4, marginBottom: 2,
+    textShadowColor: "rgba(255,255,255,0.7)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4,
+  },
   row: {
     backgroundColor: "#fff", borderRadius: 12, borderLeftWidth: 4, overflow: "hidden",
     shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2,

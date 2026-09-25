@@ -163,7 +163,10 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 8,
   },
-  title: { fontSize: 26, fontWeight: "800", color: "#1a1f36" },
+  title: {
+    fontSize: 26, fontWeight: "800", color: "#0f172a",
+    textShadowColor: "rgba(255,255,255,0.75)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 5,
+  },
   counter: { fontSize: 14, fontWeight: "600", color: "#4f46e5" },
   pills: { paddingHorizontal: 20, paddingBottom: 12, gap: 8 },
   pill: {
