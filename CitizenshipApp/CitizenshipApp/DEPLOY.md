@@ -1,84 +1,189 @@
-# Deploying CitizenFlow (React Native / Expo)
+# Deploying Liberty Civics to Google Play & the App Store
 
-This app needs **no running server**. Officials data is a single static JSON
-file you can host for free and update anytime — users pick up changes without
-re-downloading the app.
+Everything below runs from the app folder:
+`CitizenshipApp/CitizenshipApp` (the one with `package.json`).
+On Windows PowerShell use `eas.cmd` / `npx` as shown; on macOS use `eas`.
 
-## How officials data works
+- **App name (stores):** Liberty Civics: US Test
+- **Display name (under the icon):** Liberty Civics
+- **Bundle ID / package (permanent):** `com.tamdoan.libertycivics`
+- **Version:** 1.0.0 (build 1)
 
-- The app ships with a bundled copy at `data/officials.json` — so it works
-  offline and on first launch with zero hosting.
-- If the env var `EXPO_PUBLIC_OFFICIALS_URL` is set to a hosted `officials.json`,
-  the app fetches that on launch (cached for 24h) and uses it instead.
-- To update officials after an election: edit the hosted `officials.json` and
-  re-publish it. No app update, no store review.
+---
 
-`officials.json` shape:
+## 0. One‑time setup
 
-```json
-{
-  "dataVersion": "2025.1",
-  "federal": {
-    "president": "…", "vicePresident": "…",
-    "speakerOfHouse": "…", "chiefJustice": "…", "presidentParty": "…"
-  },
-  "representative": "Find your representative at house.gov/…",
-  "states": {
-    "WI": { "governor": "…", "senators": ["…", "…"], "capital": "…" }
-  }
-}
+```powershell
+npm install -g eas-cli
+eas login                 # your Expo account
+eas whoami                # confirm
+eas init                  # links this project to Expo, writes extra.eas.projectId into app.json
 ```
 
-## Host it for free (pick one)
+Commit the `app.json` change that `eas init` makes (it adds a `projectId`).
 
-### Cloudflare Pages (recommended — global CDN, free)
-1. Create a new folder with just `officials.json` in it (copy `data/officials.json`).
-2. Push it to a GitHub repo (or use Cloudflare's direct upload).
-3. Cloudflare dashboard → Pages → Create → connect the repo (or upload).
-4. Deploy. You get a URL like `https://citizenflow-data.pages.dev/officials.json`.
+> `eas.json` is already set up: `preview` builds an installable **APK**,
+> `production` builds an **AAB** (Play) / **IPA** (App Store) with auto build‑number bumps.
 
-### GitHub Pages (also free)
-1. In a repo, put `officials.json` in a `/docs` folder (or repo root).
-2. Repo Settings → Pages → Source = that branch/folder → Save.
-3. URL: `https://<user>.github.io/<repo>/officials.json`.
+---
 
-Either way, confirm the file loads in a browser and returns JSON.
+## 1. Host the privacy policy (needed by BOTH stores)
 
-## Point the app at your hosted file
+You must give each store a **public URL** to a privacy policy. `PRIVACY.md` is in
+this folder — first add your support email where it says
+`[add the support email you want shown publicly]`, then host it. Easiest option:
 
-Set the env var at build time. In `eas.json`, add an `env` block to the profile:
+1. Push to GitHub (already done).
+2. In the repo: **Settings → Pages → Build from branch → `master` / root → Save.**
+3. Your policy will be at `https://tamdoan37.github.io/<repo>/…` — or paste the
+   text into a free host (e.g. a GitHub Gist "raw" URL, or Notion public page).
 
-```json
-{
-  "build": {
-    "preview": {
-      "distribution": "internal",
-      "android": { "buildType": "apk" },
-      "env": { "EXPO_PUBLIC_OFFICIALS_URL": "https://YOUR-URL/officials.json" }
-    },
-    "production": {
-      "autoIncrement": true,
-      "android": { "buildType": "app-bundle" },
-      "env": { "EXPO_PUBLIC_OFFICIALS_URL": "https://YOUR-URL/officials.json" }
-    }
-  }
-}
+Keep that URL handy; you'll paste it into both consoles.
+
+---
+
+## 2. Android — Google Play
+
+### Build
+```powershell
+eas build -p android --profile production
+```
+This produces an **.aab**. (Use `--profile preview` any time you want a plain
+**.apk** to sideload and test on your own phone.)
+
+### Create the listing (Google Play Console)
+1. **Create app** → name **Liberty Civics: US Test**, language English (US),
+   type **App**, **Free**.
+2. **Store listing:**
+   - Short description (≤80 chars): *Free study app for the US citizenship civics test — 128 questions.*
+   - Full description: see **§4** below.
+   - App icon: `assets/store/play-icon-512.png`
+   - Feature graphic: `assets/store/feature-graphic-1024x500.png`
+   - Phone screenshots: 2–8 (see **§5**).
+3. **Privacy policy:** paste your URL from §1.
+4. **Data safety:** answer **"No data collected"** and **"No data shared"** (the
+   app stores everything on‑device — see §6 for the exact answers).
+5. **Content rating:** fill the questionnaire → it will rate **Everyone**.
+6. **Target audience:** 13+ (or your preference; it's an adult study app).
+
+### Upload & release
+- Easiest: upload the `.aab` under **Testing → Internal testing** first, add your
+  own email as a tester, install via the opt‑in link, verify.
+- Then promote to **Production**.
+- Or automate uploads with `eas submit` (needs a Google service‑account JSON —
+  Play Console → Setup → API access). Once set:
+  ```powershell
+  eas submit -p android --profile production --latest
+  ```
+
+Google review is usually hours to a couple of days for a new app.
+
+---
+
+## 3. iOS — App Store
+
+> iOS builds happen in EAS's cloud, so you don't strictly need a Mac. You DO
+> need your Apple Developer membership (you have it).
+
+### Register the app
+1. **App Store Connect → My Apps → +** → new app **Liberty Civics: US Test**,
+   bundle ID `com.tamdoan.libertycivics` (create the App ID if prompted),
+   SKU `libertycivics`, language English (US).
+
+### Build
+```powershell
+eas build -p ios --profile production
+```
+EAS will offer to create the signing certificate & provisioning profile — say
+yes and log in with your Apple account. Output is an **.ipa**.
+
+### Submit
+```powershell
+eas submit -p ios --profile production --latest
+```
+Provide your Apple ID / app‑specific password or an App Store Connect API key
+when prompted. The build appears in App Store Connect under **TestFlight** in
+~10–30 min after processing.
+
+### Fill the listing
+- Screenshots for **6.7"** and **6.5"** iPhones (and 12.9" iPad if you enable
+  iPad). See §5.
+- **App Privacy:** choose **"Data Not Collected"** (see §6).
+- Description/keywords: see §4.
+- **Age rating:** answer the questionnaire → **4+**.
+- Submit for review. Apple review is typically 1–3 days.
+
+---
+
+## 4. Store listing copy (paste‑ready)
+
+**Title:** Liberty Civics: US Test
+
+**Subtitle / short:** Free 2025 US citizenship civics test prep
+
+**Full description:**
+```
+Study for the U.S. citizenship (civics) test — 100% free, no ads, no paywalls.
+
+Liberty Civics covers all 128 questions from the 2025 USCIS civics test with
+friendly tools to help you actually remember the answers:
+
+• Flashcards — flip through every question, hear it read aloud
+• Quick Quiz — 20 weighted questions, pass mark 12/20, like the real interview
+• Mock Interview — simulate the officer's questions
+• Oral Practice — hear each question, answer aloud, self‑check
+• Listen Mode — hands‑free audio that plays questions and answers, and repeats
+  the ones you miss most
+• Read & Write — practice the English reading/writing portion
+• Quick Review & Vocabulary Drill — browse answers by topic and learn key terms
+• Weak Spots — the app tracks what you miss and helps you focus
+
+Set your home state and the app tailors the "who represents you" questions to
+your governor and senators. Track your progress, review past quizzes, and study
+at your own pace with adjustable speed and voice.
+
+Free forever — the best way to support it is to rate it or share it with a
+friend on their journey to citizenship.
+
+Not affiliated with or endorsed by USCIS or the U.S. government. Always confirm
+current answers at uscis.gov/citizenship.
 ```
 
-For local dev, create a `.env` file with `EXPO_PUBLIC_OFFICIALS_URL=https://…`
-(Expo reads `EXPO_PUBLIC_*` automatically). If unset, the app uses the bundled copy.
+**Keywords (App Store, ≤100 chars):**
+`citizenship,civics,USCIS,naturalization,US test,2025,immigration,flashcards,quiz`
 
-## Publishing the app (minimal cost)
+**Category:** Education
 
-- **Android (start here):** Google Play, one-time **$25** developer fee.
-  `eas build -p android --profile production` → upload the `.aab` to Play Console.
-- **iOS (optional):** Apple Developer Program, **$99/year**.
-- Hosting cost for officials data: **$0** (static file on a free CDN).
+---
 
-## Updating officials later
+## 5. Screenshots (you capture these)
 
-1. Edit the hosted `officials.json` (change a governor/senator name, etc.).
-2. Save/redeploy the static file.
-3. Users see the change on next launch (24h cache) — no app update required.
+Take a few from the running app on a phone or the iOS simulator:
+- Dashboard, a Flashcard, the Quiz, Listen Mode, the Study tab.
 
-Keep `data/officials.json` in the repo in sync so fresh installs start current.
+How: run `npx expo start`, open on a device/simulator, screenshot normally.
+Google Play wants 2–8 phone shots (min 320px side). Apple wants the exact device
+sizes listed in App Store Connect (6.7" and 6.5" iPhone at minimum).
+
+---
+
+## 6. Privacy answers (both stores)
+
+The app collects nothing and has no accounts/ads/analytics, so:
+- **Google Data safety:** "Does your app collect or share any of the required
+  user data types?" → **No.**
+- **Apple App Privacy:** **Data Not Collected.**
+- Notifications are **local only**; text‑to‑speech is **on‑device**. Neither is
+  data collection.
+
+---
+
+## 7. Shipping an update later
+
+1. Bump `version` in `app.json` (e.g. `1.0.1`). `eas.json` auto‑increments the
+   build number, so you don't touch `buildNumber` / `versionCode`.
+2. `eas build -p android --profile production` and/or `-p ios`.
+3. `eas submit …` and release in each console.
+
+Because officials update via the static JSON, most content changes need **no**
+new build — only civics‑question or feature changes do.
