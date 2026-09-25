@@ -72,9 +72,13 @@ export default function Dashboard() {
   // ── Quick Study shortcuts: the user's favorite modes, or the sensible
   //    default pair (Flashcards + Quiz) when they haven't picked any yet. ──
   const quickModes = useMemo(() => {
-    const favKeys = settings.favoriteModes ?? [];
-    const resolved = favKeys.map((k) => STUDY_MODE_BY_KEY[k]).filter(Boolean);
-    const keys = resolved.length ? favKeys : DEFAULT_QUICK_KEYS;
+    // Only favorites that are pickable on the Study tab count (Flashcards/Quiz
+    // are "quick" group and can't be starred, so ignore any stale ones from an
+    // older build and fall back to the sensible Flashcards + Quiz default).
+    const favKeys = (settings.favoriteModes ?? []).filter(
+      (k) => STUDY_MODE_BY_KEY[k] && STUDY_MODE_BY_KEY[k].group !== "quick"
+    );
+    const keys = favKeys.length ? favKeys : DEFAULT_QUICK_KEYS;
     return keys.map((k) => STUDY_MODE_BY_KEY[k]).filter(Boolean);
   }, [settings.favoriteModes]);
 
@@ -193,7 +197,23 @@ export default function Dashboard() {
           </Text>
         </View>
 
-        {/* ── Category scores ───────────────────────────── */}
+        {/* ── Quick actions (driven by the user's favorite modes) ── */}
+        <Text style={styles.sectionTitle}>Quick Study</Text>
+        <View style={styles.actionsGrid}>
+          {quickModes.map((m) => (
+            <TouchableOpacity
+              key={m.key}
+              style={[styles.action, { backgroundColor: m.color }]}
+              onPress={() => router.push(m.href)}
+              activeOpacity={0.85}
+            >
+              <Ionicons name={m.icon} size={26} color="#fff" />
+              <Text style={styles.actionLabel}>{m.title}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* ── Category scores (below Quick Study) ────────── */}
         <Text style={styles.sectionTitle}>Category Scores</Text>
         <View style={styles.card}>
           {categoryScores.map((c, i) => (
@@ -221,22 +241,6 @@ export default function Dashboard() {
                 />
               </View>
             </View>
-          ))}
-        </View>
-
-        {/* ── Quick actions (driven by the user's favorite modes) ── */}
-        <Text style={styles.sectionTitle}>Quick Study</Text>
-        <View style={styles.actionsGrid}>
-          {quickModes.map((m) => (
-            <TouchableOpacity
-              key={m.key}
-              style={[styles.action, { backgroundColor: m.color }]}
-              onPress={() => router.push(m.href)}
-              activeOpacity={0.85}
-            >
-              <Ionicons name={m.icon} size={26} color="#fff" />
-              <Text style={styles.actionLabel}>{m.title}</Text>
-            </TouchableOpacity>
           ))}
         </View>
 
