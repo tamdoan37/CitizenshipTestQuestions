@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   progressFill: { height: "100%", backgroundColor: "#4f46e5", borderRadius: 2 },
   cardArea: { flex: 1, alignItems: "center", justifyContent: "center" },
   empty: { alignItems: "center", gap: 16 },
-  emptyText: { fontSize: 16, color: "#94a3b8", fontWeight: "500" },
+  emptyText: { fontSize: 16, color: "#475569", fontWeight: "600" },
   nav: {
     flexDirection: "row",
     alignItems: "center",

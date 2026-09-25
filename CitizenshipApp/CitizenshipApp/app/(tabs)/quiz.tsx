@@ -289,13 +289,13 @@ export default function QuizScreen() {
           onPress={next}
           disabled={!selectedNow}
         >
-          <Text style={styles.nextBtnText}>
+          <Text style={[styles.nextBtnText, !selectedNow && styles.nextBtnTextDisabled]}>
             {isLast ? "Finish Test" : "Next Question"}
           </Text>
           <Ionicons
             name={isLast ? "flag" : "arrow-forward"}
             size={18}
-            color="#fff"
+            color={selectedNow ? "#fff" : "#94a3b8"}
           />
         </TouchableOpacity>
       </ScrollView>
@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 16,
   },
-  questionNum: { fontSize: 12, color: "#94a3b8", fontWeight: "600" },
+  questionNum: { fontSize: 12, color: "#475569", fontWeight: "700" },
   questionText: {
     fontSize: 20,
     fontWeight: "700",
@@ -439,6 +439,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
   },
-  nextBtnDisabled: { backgroundColor: "#c7d2fe" },
+  nextBtnDisabled: { backgroundColor: "#e2e8f0" },
   nextBtnText: { color: "#fff", fontWeight: "700", fontSize: 15 },
+  nextBtnTextDisabled: { color: "#94a3b8" },
 });

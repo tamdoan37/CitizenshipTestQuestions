@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   ansYour: { flex: 1, fontSize: 13, color: "#b91c1c", lineHeight: 18 },
   ansCorrect: { flex: 1, fontSize: 13, color: "#15803d", fontWeight: "500", lineHeight: 18 },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32, gap: 16 },
-  emptyText: { fontSize: 15, color: "#94a3b8", textAlign: "center", lineHeight: 22 },
+  emptyText: { fontSize: 15, color: "#475569", textAlign: "center", lineHeight: 22 },
   emptyBtn: { backgroundColor: "#4f46e5", borderRadius: 12, paddingVertical: 12, paddingHorizontal: 24 },
   emptyBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
 });

@@ -468,5 +468,5 @@ const styles = StyleSheet.create({
   supportTitle: { fontSize: 15, fontWeight: "700", color: "#1a1f36" },
   supportSub: { fontSize: 12, color: "#94a3b8", marginTop: 2 },
   about: { alignItems: "center", marginTop: 28, gap: 4 },
-  aboutText: { fontSize: 12, color: "#94a3b8" },
+  aboutText: { fontSize: 12, color: "#475569" },
 });

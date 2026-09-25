@@ -156,7 +156,7 @@ function PrimaryButton({
         pressed && !disabled && { opacity: 0.9 },
       ]}
     >
-      <Text style={styles.primaryBtnText}>{label}</Text>
+      <Text style={[styles.primaryBtnText, disabled && styles.primaryBtnTextDisabled]}>{label}</Text>
     </Pressable>
   );
 }
@@ -194,6 +194,7 @@ const styles = StyleSheet.create({
   backLink: { alignItems: "center", paddingVertical: 12 },
   backLinkText: { color: C.sub, fontWeight: "600", fontSize: 14 },
   primaryBtn: { backgroundColor: C.blue, borderRadius: 16, paddingVertical: 16, alignItems: "center" },
-  primaryBtnDisabled: { backgroundColor: "#c7d2fe" },
+  primaryBtnDisabled: { backgroundColor: "#e2e8f0" },
   primaryBtnText: { color: "#fff", fontWeight: "800", fontSize: 16 },
+  primaryBtnTextDisabled: { color: "#94a3b8" },
 });
