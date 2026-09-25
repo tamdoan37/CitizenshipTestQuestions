@@ -193,7 +193,23 @@ export default function Dashboard() {
           </Text>
         </View>
 
-        {/* ── Category scores ───────────────────────────── */}
+        {/* ── Quick actions (driven by the user's favorite modes) ── */}
+        <Text style={styles.sectionTitle}>Quick Study</Text>
+        <View style={styles.actionsGrid}>
+          {quickModes.map((m) => (
+            <TouchableOpacity
+              key={m.key}
+              style={[styles.action, { backgroundColor: m.color }]}
+              onPress={() => router.push(m.href)}
+              activeOpacity={0.85}
+            >
+              <Ionicons name={m.icon} size={26} color="#fff" />
+              <Text style={styles.actionLabel}>{m.title}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* ── Category scores (below Quick Study) ────────── */}
         <Text style={styles.sectionTitle}>Category Scores</Text>
         <View style={styles.card}>
           {categoryScores.map((c, i) => (
@@ -221,22 +237,6 @@ export default function Dashboard() {
                 />
               </View>
             </View>
-          ))}
-        </View>
-
-        {/* ── Quick actions (driven by the user's favorite modes) ── */}
-        <Text style={styles.sectionTitle}>Quick Study</Text>
-        <View style={styles.actionsGrid}>
-          {quickModes.map((m) => (
-            <TouchableOpacity
-              key={m.key}
-              style={[styles.action, { backgroundColor: m.color }]}
-              onPress={() => router.push(m.href)}
-              activeOpacity={0.85}
-            >
-              <Ionicons name={m.icon} size={26} color="#fff" />
-              <Text style={styles.actionLabel}>{m.title}</Text>
-            </TouchableOpacity>
           ))}
         </View>
 

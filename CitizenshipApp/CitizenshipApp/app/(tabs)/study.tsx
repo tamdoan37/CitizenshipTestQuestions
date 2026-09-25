@@ -6,7 +6,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { ScreenBackground } from "@/components/ScreenBackground";
 import { Mascot } from "@/components/Mascot";
 import { useApp } from "@/context/AppContext";
-import { STUDY_MODES, type StudyMode, type IconName } from "@/data/studyModes";
+import { STUDY_MODES, type StudyMode } from "@/data/studyModes";
 
 export default function StudyScreen() {
   const { trackers, settings, toggleFavoriteMode } = useApp();
@@ -21,11 +21,12 @@ export default function StudyScreen() {
     () => new Set(settings.favoriteModes ?? []),
     [settings.favoriteModes]
   );
+  // Only modes shown on this tab can be picked (Flashcards/Quiz live on the Dashboard).
   const favModes = useMemo(
-    () => STUDY_MODES.filter((m) => favSet.has(m.key)),
+    () => STUDY_MODES.filter((m) => m.group !== "quick" && favSet.has(m.key)),
     [favSet]
   );
-  const studyModes = STUDY_MODES.filter((m) => m.group === "study");
+  const practiceModes = STUDY_MODES.filter((m) => m.group === "practice");
   const referenceModes = STUDY_MODES.filter((m) => m.group === "reference");
 
   return (
@@ -60,15 +61,14 @@ export default function StudyScreen() {
             <View style={styles.pickHint}>
               <Ionicons name="star-outline" size={20} color="#f59e0b" />
               <Text style={styles.pickHintText}>
-                Tap the ☆ on any mode below to add it here — your picks also become
-                the Quick Study shortcuts on your Dashboard.
+                Tap the ☆ on any mode below to add it to your picks for quick access.
               </Text>
             </View>
           )}
 
-          {/* ── Study modes ── */}
-          <Text style={styles.section}>Study Modes</Text>
-          {studyModes.map((m) => (
+          {/* ── Practice ── */}
+          <Text style={styles.section}>Practice</Text>
+          {practiceModes.map((m) => (
             <ModeCard
               key={m.key}
               mode={m}
@@ -87,23 +87,6 @@ export default function StudyScreen() {
               onToggleFav={() => toggleFavoriteMode(m.key)}
             />
           ))}
-
-          {/* ── Focus ── */}
-          <Text style={styles.section}>Focus</Text>
-          <View style={styles.grid}>
-            <FocusCard
-              title="Weak spots"
-              icon="star"
-              color="#f59e0b"
-              onPress={() => router.push("/weak-spots")}
-            />
-            <FocusCard
-              title="2025 updates"
-              icon="sparkles"
-              color="#2563eb"
-              onPress={() => router.push("/updates")}
-            />
-          </View>
         </ScrollView>
       </SafeAreaView>
     </ScreenBackground>
@@ -142,19 +125,6 @@ function ModeCard({
   );
 }
 
-function FocusCard({
-  title, icon, color, onPress,
-}: { title: string; icon: IconName; color: string; onPress: () => void }) {
-  return (
-    <TouchableOpacity style={styles.focusCard} activeOpacity={0.85} onPress={onPress}>
-      <View style={[styles.modeIcon, { backgroundColor: color + "1A" }]}>
-        <Ionicons name={icon} size={22} color={color} />
-      </View>
-      <Text style={styles.focusTitle}>{title}</Text>
-    </TouchableOpacity>
-  );
-}
-
 const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: { padding: 16, paddingBottom: 32 },
@@ -187,10 +157,4 @@ const styles = StyleSheet.create({
   modeTitle: { fontSize: 15, fontWeight: "700", color: "#1a1f36" },
   modeDesc: { fontSize: 13, color: "#64748b", marginTop: 2 },
   starBtn: { padding: 2 },
-  grid: { flexDirection: "row", gap: 12 },
-  focusCard: {
-    flex: 1, backgroundColor: "#fff", borderRadius: 16, padding: 16, gap: 10,
-    shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2,
-  },
-  focusTitle: { fontSize: 15, fontWeight: "700", color: "#1a1f36" },
 });
