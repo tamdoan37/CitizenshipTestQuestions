@@ -174,9 +174,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 18,
   },
-  title: { fontSize: 28, fontWeight: "800", color: "#1a1f36", marginBottom: 10 },
-  subtitle: { fontSize: 15, lineHeight: 24, color: "#475569", textAlign: "center" },
-  emphasis: { color: "#4f46e5", fontWeight: "700" },
+  title: {
+    fontSize: 28, fontWeight: "800", color: "#0f172a", marginBottom: 10,
+    textShadowColor: "rgba(255,255,255,0.75)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 5,
+  },
+  subtitle: {
+    fontSize: 15, lineHeight: 24, color: "#1e293b", fontWeight: "600", textAlign: "center",
+    textShadowColor: "rgba(255,255,255,0.75)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 5,
+  },
+  emphasis: { color: "#4338ca", fontWeight: "800" },
   grid: { gap: 14 },
   card: {
     flexDirection: "row",
@@ -221,5 +227,8 @@ const styles = StyleSheet.create({
     marginTop: 28,
     paddingHorizontal: 4,
   },
-  footerText: { flex: 1, fontSize: 12, color: "#475569", lineHeight: 18 },
+  footerText: {
+    flex: 1, fontSize: 12, color: "#334155", fontWeight: "600", lineHeight: 18,
+    textShadowColor: "rgba(255,255,255,0.7)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4,
+  },
 });

@@ -344,7 +344,10 @@ function OfficialField({
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: "transparent" },
   container: { padding: 20, paddingBottom: 48 },
-  title: { fontSize: 26, fontWeight: "800", color: "#1a1f36", marginBottom: 12 },
+  title: {
+    fontSize: 26, fontWeight: "800", color: "#0f172a", marginBottom: 12,
+    textShadowColor: "rgba(255,255,255,0.75)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 5,
+  },
   officialInput: {
     marginTop: 4,
     borderWidth: 1.5,

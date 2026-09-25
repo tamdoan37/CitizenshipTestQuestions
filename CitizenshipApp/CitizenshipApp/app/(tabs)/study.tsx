@@ -141,7 +141,8 @@ const styles = StyleSheet.create({
   bannerPct: { color: "#e2e8f0", fontSize: 12, fontWeight: "600", marginTop: 6 },
   section: {
     fontSize: 13, fontWeight: "800", letterSpacing: 0.6, textTransform: "uppercase",
-    color: "#334155", marginTop: 20, marginBottom: 10, marginLeft: 4,
+    color: "#1e293b", marginTop: 20, marginBottom: 10, marginLeft: 4,
+    textShadowColor: "rgba(255,255,255,0.7)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4,
   },
   pickHint: {
     flexDirection: "row", alignItems: "center", gap: 10,

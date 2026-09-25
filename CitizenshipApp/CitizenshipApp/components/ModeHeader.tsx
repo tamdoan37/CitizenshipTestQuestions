@@ -29,6 +29,9 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     gap: 12,
   },
-  title: { flex: 1, fontSize: 20, fontWeight: "800", color: "#1a1f36" },
+  title: {
+    flex: 1, fontSize: 20, fontWeight: "800", color: "#0f172a",
+    textShadowColor: "rgba(255,255,255,0.75)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 5,
+  },
   right: { minWidth: 24, alignItems: "flex-end" },
 });

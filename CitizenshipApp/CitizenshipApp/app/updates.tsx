@@ -80,5 +80,5 @@ const styles = StyleSheet.create({
   },
   cardTitle: { fontSize: 15, fontWeight: "700", color: "#1a1f36" },
   cardBody: { fontSize: 13, color: "#475569", marginTop: 4, lineHeight: 19 },
-  footnote: { fontSize: 12, color: "#94a3b8", textAlign: "center", marginTop: 8 },
+  footnote: { fontSize: 12, color: "#475569", textAlign: "center", marginTop: 8 },
 });

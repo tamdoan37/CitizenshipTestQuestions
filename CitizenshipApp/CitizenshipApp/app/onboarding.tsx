@@ -168,9 +168,18 @@ const styles = StyleSheet.create({
   dot: { width: 26, height: 5, borderRadius: 3, backgroundColor: "#cbd5e1" },
   dotActive: { backgroundColor: C.blue },
   headerBlock: { paddingHorizontal: 24, paddingTop: 4 },
-  title: { fontSize: 26, fontWeight: "800", color: C.text, marginBottom: 16 },
-  label: { fontSize: 13, fontWeight: "800", letterSpacing: 0.5, textTransform: "uppercase", color: "#475569", marginBottom: 8 },
-  hint: { fontSize: 13, color: C.sub, marginTop: 4, lineHeight: 18 },
+  title: {
+    fontSize: 26, fontWeight: "800", color: C.text, marginBottom: 16,
+    textShadowColor: "rgba(255,255,255,0.75)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 5,
+  },
+  label: {
+    fontSize: 13, fontWeight: "800", letterSpacing: 0.5, textTransform: "uppercase", color: "#334155", marginBottom: 8,
+    textShadowColor: "rgba(255,255,255,0.7)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4,
+  },
+  hint: {
+    fontSize: 13, color: "#334155", fontWeight: "500", marginTop: 4, lineHeight: 18,
+    textShadowColor: "rgba(255,255,255,0.7)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4,
+  },
   nameInput: {
     backgroundColor: "#fff", borderRadius: 14, borderWidth: 1.5, borderColor: C.border,
     paddingHorizontal: 16, paddingVertical: 13, fontSize: 16, color: C.text,
@@ -188,8 +197,12 @@ const styles = StyleSheet.create({
   centerBlock: { flex: 1, alignItems: "center", justifyContent: "center", padding: 28, gap: 14 },
   goodLuckTitle: {
     fontSize: 26, fontWeight: "800", color: C.text, textAlign: "center", lineHeight: 34, marginTop: 8,
+    textShadowColor: "rgba(255,255,255,0.75)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 5,
   },
-  goodLuckSub: { fontSize: 16, color: "#475569", textAlign: "center", lineHeight: 24 },
+  goodLuckSub: {
+    fontSize: 16, color: "#334155", fontWeight: "500", textAlign: "center", lineHeight: 24,
+    textShadowColor: "rgba(255,255,255,0.7)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4,
+  },
   footerCenter: { alignSelf: "stretch", marginTop: 12 },
   backLink: { alignItems: "center", paddingVertical: 12 },
   backLinkText: { color: C.sub, fontWeight: "600", fontSize: 14 },
