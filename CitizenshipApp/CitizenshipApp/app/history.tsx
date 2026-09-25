@@ -191,8 +191,8 @@ const styles = StyleSheet.create({
   tileVal: { fontSize: 20, fontWeight: "700" },
   tileLbl: { fontSize: 10, fontWeight: "600", letterSpacing: 0.4, textTransform: "uppercase", color: "#9ca3af", marginTop: 4 },
   hint: {
-    fontSize: 12, color: "#334155", fontWeight: "500", marginLeft: 4, marginBottom: 2,
-    textShadowColor: "rgba(255,255,255,0.7)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4,
+    fontSize: 12, color: "#0f172a", fontWeight: "600", marginLeft: 4, marginBottom: 2,
+    textShadowColor: "rgba(255,255,255,0.8)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 5,
   },
   row: {
     backgroundColor: "#fff", borderRadius: 12, borderLeftWidth: 4, overflow: "hidden",
@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
   ansYour: { flex: 1, fontSize: 13, color: "#b91c1c", lineHeight: 18 },
   ansCorrect: { flex: 1, fontSize: 13, color: "#15803d", fontWeight: "500", lineHeight: 18 },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32, gap: 16 },
-  emptyText: { fontSize: 15, color: "#475569", textAlign: "center", lineHeight: 22 },
+  emptyText: { fontSize: 15, color: "#1e293b", fontWeight: "500", textAlign: "center", lineHeight: 22 },
   emptyBtn: { backgroundColor: "#4f46e5", borderRadius: 12, paddingVertical: 12, paddingHorizontal: 24 },
   emptyBtnText: { color: "#fff", fontWeight: "700", fontSize: 14 },
 });

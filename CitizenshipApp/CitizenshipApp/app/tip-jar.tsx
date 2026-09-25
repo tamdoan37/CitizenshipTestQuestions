@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(255,255,255,0.75)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 5,
   },
   subtitle: {
-    fontSize: 15, lineHeight: 24, color: "#1e293b", fontWeight: "600", textAlign: "center",
+    fontSize: 15, lineHeight: 24, color: "#0f172a", fontWeight: "700", textAlign: "center",
     textShadowColor: "rgba(255,255,255,0.75)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 5,
   },
   emphasis: { color: "#4338ca", fontWeight: "800" },
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   footerText: {
-    flex: 1, fontSize: 12, color: "#334155", fontWeight: "600", lineHeight: 18,
+    flex: 1, fontSize: 12, color: "#1e293b", fontWeight: "600", lineHeight: 18,
     textShadowColor: "rgba(255,255,255,0.7)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 4,
   },
 });

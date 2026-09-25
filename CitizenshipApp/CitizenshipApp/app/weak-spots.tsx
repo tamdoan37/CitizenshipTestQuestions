@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   gotItText: { color: "#15803d", fontWeight: "700", fontSize: 14 },
   empty: { flex: 1, alignItems: "center", justifyContent: "center", padding: 32, gap: 14 },
   emptyTitle: { fontSize: 18, fontWeight: "700", color: "#1a1f36" },
-  emptyText: { fontSize: 14, color: "#475569", textAlign: "center", lineHeight: 20 },
+  emptyText: { fontSize: 14, color: "#1e293b", fontWeight: "500", textAlign: "center", lineHeight: 20 },
   cta: { backgroundColor: "#4f46e5", borderRadius: 12, paddingVertical: 12, paddingHorizontal: 24, marginTop: 6 },
   ctaText: { color: "#fff", fontWeight: "700", fontSize: 14 },
 });

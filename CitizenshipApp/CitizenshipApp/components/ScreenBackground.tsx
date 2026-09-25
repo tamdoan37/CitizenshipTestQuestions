@@ -20,7 +20,7 @@ export function ScreenBackground({
     <ImageBackground
       source={require("../assets/liberty-bg.png")}
       resizeMode="cover"
-      blurRadius={6}
+      blurRadius={18}
       style={[styles.fill, style]}
     >
       {/* Readability veil — keeps content crisp over the blurred photo. */}
