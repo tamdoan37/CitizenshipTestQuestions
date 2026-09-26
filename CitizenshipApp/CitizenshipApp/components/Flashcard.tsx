@@ -121,21 +121,22 @@ export function Flashcard({ question, ttsRate = 0.9, onReveal }: Props) {
         <Pressable onPress={flip} style={styles.inner}>
           <View style={styles.header}>
             <CategoryBadge category={question.category} />
-            <Text style={styles.number}>#{question.number}</Text>
+            <View style={styles.headerRight}>
+              <TouchableOpacity
+                onPress={speak}
+                style={styles.headerSpeaker}
+                hitSlop={10}
+                accessibilityLabel="Read question aloud"
+              >
+                <Ionicons name="volume-high" size={20} color="#4f46e5" />
+              </TouchableOpacity>
+              <Text style={styles.number}>#{question.number}</Text>
+            </View>
           </View>
 
           <Text style={styles.question}>{question.text}</Text>
 
           <Text style={styles.hint}>Tap the card to flip</Text>
-
-          <TouchableOpacity
-            onPress={speak}
-            style={styles.speaker}
-            hitSlop={12}
-            accessibilityLabel="Read question aloud"
-          >
-            <Ionicons name="volume-high" size={22} color="#4f46e5" />
-          </TouchableOpacity>
         </Pressable>
       </Animated.View>
 
@@ -273,6 +274,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   number: { fontSize: 13, fontWeight: "600", color: "#94a3b8" },
+  headerRight: { flexDirection: "row", alignItems: "center", gap: 10 },
+  headerSpeaker: {
+    width: 36, height: 36, borderRadius: 18, backgroundColor: "#eef2ff",
+    alignItems: "center", justifyContent: "center",
+  },
   question: {
     flex: 1,
     fontSize: 22,

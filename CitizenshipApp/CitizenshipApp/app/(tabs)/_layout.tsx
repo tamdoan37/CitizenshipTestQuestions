@@ -1,10 +1,11 @@
 import { Redirect, Tabs } from "expo-router";
-import { Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp } from "@/context/AppContext";
 
 export default function TabLayout() {
   const { hydrated, settings } = useApp();
+  const insets = useSafeAreaInsets();
 
   // Wait for persisted state, then route first-time users to onboarding.
   if (!hydrated) return null;
@@ -20,8 +21,9 @@ export default function TabLayout() {
           backgroundColor: "#ffffff",
           borderTopColor: "#f1f5f9",
           borderTopWidth: 1,
-          height: Platform.OS === "ios" ? 88 : 64,
-          paddingBottom: Platform.OS === "ios" ? 28 : 10,
+          // Reserve room for the Android/iOS system nav bar (edge-to-edge).
+          height: 60 + insets.bottom,
+          paddingBottom: insets.bottom + 8,
           paddingTop: 8,
           shadowColor: "#000",
           shadowOpacity: 0.08,
