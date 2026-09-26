@@ -4,7 +4,7 @@ Everything below runs from the app folder:
 `CitizenshipApp/CitizenshipApp` (the one with `package.json`).
 On Windows PowerShell use `eas.cmd` / `npx` as shown; on macOS use `eas`.
 
-- **App name (stores):** Liberty Civics: US Test
+- **App name (stores):** Liberty: US Citizenship Test
 - **Display name (under the icon):** Liberty Civics
 - **Bundle ID / package (permanent):** `com.tamdoan.libertycivics`
 - **Version:** 1.0.0 (build 1)
@@ -52,7 +52,7 @@ This produces an **.aab**. (Use `--profile preview` any time you want a plain
 **.apk** to sideload and test on your own phone.)
 
 ### Create the listing (Google Play Console)
-1. **Create app** → name **Liberty Civics: US Test**, language English (US),
+1. **Create app** → name **Liberty: US Citizenship Test**, language English (US),
    type **App**, **Free**.
 2. **Store listing:**
    - Short description (≤80 chars): *Free study app for the US citizenship civics test — 128 questions.*
@@ -86,7 +86,7 @@ Google review is usually hours to a couple of days for a new app.
 > need your Apple Developer membership (you have it).
 
 ### Register the app
-1. **App Store Connect → My Apps → +** → new app **Liberty Civics: US Test**,
+1. **App Store Connect → My Apps → +** → new app **Liberty: US Citizenship Test**,
    bundle ID `com.tamdoan.libertycivics` (create the App ID if prompted),
    SKU `libertycivics`, language English (US).
 
@@ -117,7 +117,7 @@ when prompted. The build appears in App Store Connect under **TestFlight** in
 
 ## 4. Store listing copy (paste‑ready)
 
-**Title:** Liberty Civics: US Test
+**Title:** Liberty: US Citizenship Test
 
 **Subtitle / short:** Free 2025 US citizenship civics test prep
 
@@ -187,3 +187,23 @@ The app collects nothing and has no accounts/ads/analytics, so:
 
 Because officials update via the static JSON, most content changes need **no**
 new build — only civics‑question or feature changes do.
+
+## 8. Monetization later (keep it free now)
+
+Plan: launch **100% free, no ads**. After traction (~1,000 users), add ads plus
+an optional **$1.99 "remove ads"** in‑app purchase.
+
+Rules that keep this safe:
+- **Never switch the app from Free to Paid** — that's the one irreversible move.
+  Keep it **Free** and monetize with ads + IAP (this is standard freemium).
+- Adding **ads** (e.g. Google AdMob via `react-native-google-mobile-ads`) means
+  the app then collects the advertising ID → you must update the Play **Data
+  safety** form and the privacy policy at that time (say what's collected and
+  that it's for ads). Until ads ship, "no data collected" is correct.
+- The **$1.99 remove‑ads** option is an in‑app purchase. We removed the IAP code
+  when going free; re‑adding it is a small task (react-native-iap + a
+  non‑consumable "remove_ads" product + the withIapFlavor plugin) when you're
+  ready.
+
+Suggested sequence when monetizing: ship ads first (fastest revenue), then add
+the remove‑ads IAP as the paid upgrade. Ping Claude and it'll wire both.
